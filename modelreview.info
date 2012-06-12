@@ -1,0 +1,8 @@
+;Id$
+
+name = "CoMSES Model Reviews"
+description = "Model Review system for the CoMSES Model Library"
+package = OpenABM
+version = 6.x-0.1beta
+core = 6.x
+php = 5.2

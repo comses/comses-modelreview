@@ -1,0 +1,155 @@
+<?php
+// $Id: $
+
+
+/**
+ * Implementation of hook_install
+ */
+function modelreview_install() {
+  drupal_install_schema('modelreview');
+  drupal_install_schema('modelreview_action');
+}
+
+
+/**
+ * Implementation of hook_uninstall
+ */
+function modelreview_uninstall() {
+  drupal_uninstall_schema('modelreview');
+  drupal_uninstall_schema('modelreview_action');
+  menu_rebuild();
+}
+
+
+function modelreview_schema() {
+  $schema['modelreview'] = array(
+    'description' => t('Table for individual model reviews'),
+    'fields' => array(
+      'review_id' => array(
+        'description' => t('The primary identifier for a particular review cycle.'),
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE),
+      'model_nid' => array(
+        'description' => t('The node id for the model being reviewed.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0),
+    ),
+    'indexes' => array(
+      'model_nid'  => array('model_nid'),
+    ),
+    'primary key'  => array('review_id'),
+  );
+
+  $schema['modelreview_action'] = array(
+    'description' => t('Table for action updates during model reviews'),
+    'fields' => array(
+      'review_id' => array(
+        'description' => t('The primary identifier for a particular review cycle.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0),
+      'review_sid' => array(
+        'description' => t('The unique step identifier for the current action in the review process.'),
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,),
+      'modelversion_nid' => array(
+        'description' => t('The model version node id for the model being reviewed.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0),
+      'status' => array(
+        'description' => t('The status code for this step in the model review process.'),
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+        'default' => 0),
+      'statusdate' => array(
+        'description' => t('The datetime stamp for this review step.'),
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+        'default' => 0),
+      'reviewer' => array(
+        'description' => t('The user id of the reviewer that processed this model review step.'),
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+        'default' => -1),
+      'code_clean' => array(
+        'description' => t('Binary: Is the model code clean?'),
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+        'default' => -1),
+      'code_commented' => array(
+        'description' => t('Binary: Is the code commented?'),
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+        'default' => -1),
+      'model_documented' => array(
+        'description' => t('Binary: Is the model documented?'),
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+        'default' => -1),
+      'model_runs' => array(
+        'description' => t('Binary: Does the model run?'),
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+        'default' => -1),
+      'code_notes' => array(
+        'description' => t('Comments on the code.'),
+        'type' => 'text',
+        'not null' => FALSE,),
+      'doc_notes' => array(
+        'description' => t('Comments on the dcoumentation.'),
+        'type' => 'text',
+        'not null' => FALSE,),
+      'other_notes' => array(
+        'description' => t('Other comments about the model.'),
+        'type' => 'text',
+        'not null' => FALSE,),
+    ),
+    'indexes' => array(
+      'modelversion_nid'  => array('modelversion_nid'),
+    ),
+    'unique keys' => array(
+      'id_sid'            => array('review_id', 'review_sid'),
+    ),
+    'primary key'         => array('review_sid'),
+  );
+  return $schema;
+}
+
+
+
+
+
+
+// EXAMPLE hook_update_N
+// every hook_update_N will look the same 
+// and you will need to write a new one 
+// every time you update the .def.inc file
+
+//function modellibrary_update_1() {
+//    _modellibrary_save_cck_node();
+//    return array();
+//}
+//
+//function modellibrary_update_2() {
+//    _modellibrary_save_cck_node();
+//    return array();
+//}
+//
+//function modellibrary_update_3() {
+//    _modellibrary_save_cck_node();
+//    return array();
+//}
