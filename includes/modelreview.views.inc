@@ -39,6 +39,26 @@
  * @endcode
  */
 
+/**
+ * Implementation of hook_views_handlers() to register all of the basic handlers
+ * views uses.
+ */
+#function modelreview_views_handlers() {
+#  return array(
+#    'info' => array(
+#      'path' => drupal_get_path('module', 'modelreview'). '/includes',
+#    ),
+#    'handlers' =>; array(
+#      // The name of my handler
+#      'modelreview_handler_field_boolean' => array(
+#        // The name of the handler we are extending.
+#        'parent' => 'views_handler_field_boolean',
+#      ),
+#    ),
+#  );
+#}
+
+
 function modelreview_views_data()  {
   // Basic table information.
 
@@ -51,6 +71,7 @@ function modelreview_views_data()  {
   $data = array();
   $data['modelreview']['table']['group']  = t('Model Review');
   $data['modelreview_action']['table']['group']  = t('Model Review');
+  $data['modelreview_actiondesc']['table']['group']  = t('Model Review');
 
   // Let Views know that our tables join to the 'node'
   // base table. This means it will be available when listing
@@ -66,8 +87,16 @@ function modelreview_views_data()  {
   $data['modelreview_action']['table']['join'] = array(
     'node' => array(
       'left_table' => 'modelreview',
-      'left_field' => 'review_id',
-      'field' => 'review_id',
+      'left_field' => 'sid',
+      'field' => 'sid',
+    ),
+  );
+
+  $data['modelreview_actiondesc']['table']['join'] = array(
+    'node' => array(
+      'left_table' => 'modelreview_action',
+      'left_field' => 'status',
+      'field' => 'status',
     ),
   );
 
@@ -75,7 +104,7 @@ function modelreview_views_data()  {
    * Describe modelreview fields *
    * * * * * * * * * * * * * * * */
   // Review ID - Key
-  $data['modelreview']['review_id'] = array(
+  $data['modelreview']['rid'] = array(
     'title' => t('Review ID'),
     'help' => t('Unique identifier for an individual model review.'),
     'field' => array(
@@ -100,14 +129,17 @@ function modelreview_views_data()  {
       'handler' => 'views_handler_relationship',
       'label' => t('Model Review'),
     ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_numeric',
+    ),
   );
 
   /* * * * * * * * * * * * * * * * * * * *
    * Describe modelreview_action fields  *
    * * * * * * * * * * * * * * * * * * * */
   // Review Action - Step ID
-  $data['modelreview_action']['review_sid'] = array(
-    'title' => t('Review SID'),
+  $data['modelreview_action']['sid'] = array(
+    'title' => t('SID'),
     'help' => t('Unique identifier for an individual review action.'),
     'field' => array(
       'handler' => 'views_handler_field_numeric',
@@ -123,19 +155,23 @@ function modelreview_views_data()  {
 
   // Model Version Node ID    
   $data['modelreview_action']['modelversion_nid'] = array(
-    'title' => t('Model Version Node ID'),
+    'title' => t('Model Version NID'),
     'help' => t('Node ID for the Model Version associated with this review action.'),
-    'relationship' => array(
-      'base' => 'node',
-      'field' => 'nid',
-      'handler' => 'views_handler_relationship',
-      'label' => t('Model Review'),
+    'field' => array(
+      'handler' => 'views_handler_field_numeric',
+      'click sortable' => TRUE,
+     ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
     ),
   );
 
   // Model Status Code    
   $data['modelreview_action']['status'] = array(
-    'title' => t('Review Status Code'),
+    'title' => t('Status Code'),
     'help' => t('Current model status code for this review action.'),
 
     'field' => array(
@@ -178,6 +214,9 @@ function modelreview_views_data()  {
      ),
     'filter' => array(
       'handler' => 'views_handler_filter_numeric',
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_numeric',
     ),
     'sort' => array(
       'handler' => 'views_handler_sort',
@@ -272,9 +311,6 @@ function modelreview_views_data()  {
      'filter' => array(
       'handler' => 'views_handler_filter_string',
      ),
-     'argument' => array(
-       'handler' => 'views_handler_argument_string',
-     ),
      'sort' => array(
       'handler' => 'views_handler_sort',
      ),
@@ -291,9 +327,6 @@ function modelreview_views_data()  {
      ),
      'filter' => array(
       'handler' => 'views_handler_filter_string',
-     ),
-     'argument' => array(
-       'handler' => 'views_handler_argument_string',
      ),
      'sort' => array(
       'handler' => 'views_handler_sort',
@@ -312,8 +345,42 @@ function modelreview_views_data()  {
      'filter' => array(
       'handler' => 'views_handler_filter_string',
      ),
-     'argument' => array(
-       'handler' => 'views_handler_argument_string',
+     'sort' => array(
+      'handler' => 'views_handler_sort',
+     ),
+  );
+
+  // Editor Comments    
+  $data['modelreview_action']['editor_notes'] = array(
+    'title' => t('Editor Comments'),
+    'help' => t('Editor\'s comments to the Author.'),
+
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+     'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+     'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+
+  /* * * * * * * * * * * * * * * * * * * *
+   * Describe modelreview_actiondesc fields  *
+   * * * * * * * * * * * * * * * * * * * */
+
+  // Model Version Node ID    
+  $data['modelreview_actiondesc']['description'] = array(
+    'title' => t('Status Description'),
+    'help' => t('Status Description.'),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+     ),
+     'filter' => array(
+      'handler' => 'views_handler_filter_string',
      ),
      'sort' => array(
       'handler' => 'views_handler_sort',

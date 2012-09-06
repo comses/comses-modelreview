@@ -8,6 +8,26 @@
 function modelreview_install() {
   drupal_install_schema('modelreview');
   drupal_install_schema('modelreview_action');
+  drupal_install_schema('modelreview_actiondesc');
+  drupal_install_schema('modelreview_compliance');
+
+  $sql = "INSERT INTO {modelreview_actiondesc} (`status`, `description`) VALUES
+    (1, 'Review Requested'),
+    (2, 'Assigned to Reviewer'),
+    (3, 'Review Completed'),
+    (4, 'Return to Author for Revision'),
+    (5, 'Revision Completed, Re-Review Requested'),
+    (6, 'Review Closed - Model Certified'),
+    (7, 'Review Closed - Certification Denied');";
+
+  db_query($sql);
+
+  $sql = "INSERT INTO {modelreview_compliance} (`status`, `description`) VALUES
+    (0, 'Does Not Meet Standards'),
+    (1, 'Partially Meets Standards'),
+    (2, 'Fully Meets Standards');";
+
+  db_query($sql);
 }
 
 
@@ -17,6 +37,8 @@ function modelreview_install() {
 function modelreview_uninstall() {
   drupal_uninstall_schema('modelreview');
   drupal_uninstall_schema('modelreview_action');
+  drupal_uninstall_schema('modelreview_actiondesc');
+  drupal_uninstall_schema('modelreview_compliance');
   menu_rebuild();
 }
 
@@ -25,11 +47,17 @@ function modelreview_schema() {
   $schema['modelreview'] = array(
     'description' => t('Table for individual model reviews'),
     'fields' => array(
-      'review_id' => array(
+      'rid' => array(
         'description' => t('The primary identifier for a particular review cycle.'),
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE),
+      'sid' => array(
+        'description' => t('The unique step identifier for the current action in the review process.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0),
       'model_nid' => array(
         'description' => t('The node id for the model being reviewed.'),
         'type' => 'int',
@@ -40,19 +68,19 @@ function modelreview_schema() {
     'indexes' => array(
       'model_nid'  => array('model_nid'),
     ),
-    'primary key'  => array('review_id'),
+    'primary key'  => array('rid'),
   );
 
   $schema['modelreview_action'] = array(
     'description' => t('Table for action updates during model reviews'),
     'fields' => array(
-      'review_id' => array(
+      'rid' => array(
         'description' => t('The primary identifier for a particular review cycle.'),
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0),
-      'review_sid' => array(
+      'sid' => array(
         'description' => t('The unique step identifier for the current action in the review process.'),
         'type' => 'serial',
         'unsigned' => TRUE,
@@ -63,7 +91,7 @@ function modelreview_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0),
-      'status' => array(
+      'statusid' => array(
         'description' => t('The status code for this step in the model review process.'),
         'type' => 'int',
         'unsigned' => FALSE,
@@ -79,42 +107,46 @@ function modelreview_schema() {
         'description' => t('The user id of the reviewer that processed this model review step.'),
         'type' => 'int',
         'unsigned' => FALSE,
-        'not null' => TRUE,
-        'default' => -1),
+        'not null' => FALSE,
+        'default' => NULL),
       'code_clean' => array(
-        'description' => t('Binary: Is the model code clean?'),
+        'description' => t('Option list: Is the model code clean?'),
         'type' => 'int',
         'unsigned' => FALSE,
-        'not null' => TRUE,
-        'default' => -1),
+        'not null' => FALSE,
+        'default' => NULL),
       'code_commented' => array(
-        'description' => t('Binary: Is the code commented?'),
+        'description' => t('Option list: Is the code commented?'),
         'type' => 'int',
         'unsigned' => FALSE,
-        'not null' => TRUE,
-        'default' => -1),
+        'not null' => FALSE,
+        'default' => NULL),
       'model_documented' => array(
-        'description' => t('Binary: Is the model documented?'),
+        'description' => t('Option list: Is the model documented?'),
         'type' => 'int',
         'unsigned' => FALSE,
-        'not null' => TRUE,
-        'default' => -1),
+        'not null' => FALSE,
+        'default' => NULL),
       'model_runs' => array(
-        'description' => t('Binary: Does the model run?'),
+        'description' => t('Option list: Does the model run?'),
         'type' => 'int',
         'unsigned' => FALSE,
-        'not null' => TRUE,
-        'default' => -1),
+        'not null' => FALSE,
+        'default' => NULL),
       'code_notes' => array(
-        'description' => t('Comments on the code.'),
+        'description' => t('Reviewer notes on the code.'),
         'type' => 'text',
         'not null' => FALSE,),
       'doc_notes' => array(
-        'description' => t('Comments on the dcoumentation.'),
+        'description' => t('Reviewer notes on the documentation.'),
         'type' => 'text',
         'not null' => FALSE,),
       'other_notes' => array(
-        'description' => t('Other comments about the model.'),
+        'description' => t('Reviewer notes to the Editor.'),
+        'type' => 'text',
+        'not null' => FALSE,),
+      'editor_notes' => array(
+        'description' => t('Editor's notes to the Author.'),
         'type' => 'text',
         'not null' => FALSE,),
     ),
@@ -122,10 +154,49 @@ function modelreview_schema() {
       'modelversion_nid'  => array('modelversion_nid'),
     ),
     'unique keys' => array(
-      'id_sid'            => array('review_id', 'review_sid'),
+      'id_sid'            => array('rid', 'sid'),
     ),
-    'primary key'         => array('review_sid'),
+    'primary key'         => array('sid'),
   );
+
+  $schema['modelreview_actiondesc'] = array(
+    'description' => t('Table for describing status codes'),
+    'fields' => array(
+      'statusid' => array(
+        'description' => t('The primary identifier for a status code.'),
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+        'default' => 0),
+      'description' => array(
+        'status' => t('Text description of the status.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'unsigned' => FALSE,
+        'not null' => FALSE,),
+    ),
+    'primary key' => array('statusid'),
+  );
+
+  $schema['modelreview_compliance'] = array(
+    'description' => t('Table for describing compliance level'),
+    'fields' => array(
+      'cid' => array(
+        'description' => t('The primary identifier for a compliance code.'),
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+        'default' => 0),
+      'compliance' => array(
+        'description' => t('Text description of the compliance code.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'unsigned' => FALSE,
+        'not null' => FALSE,),
+    ),
+    'primary key' => array('cid'),
+  );
+
   return $schema;
 }
 
