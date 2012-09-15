@@ -11,7 +11,7 @@ function modelreview_install() {
   drupal_install_schema('modelreview_actiondesc');
   drupal_install_schema('modelreview_compliance');
 
-  $sql = "INSERT INTO {modelreview_actiondesc} (`status`, `description`) VALUES
+  $sql = "INSERT INTO {modelreview_actiondesc} (`statusid`, `status`) VALUES
     (1, 'Review Requested'),
     (2, 'Assigned to Reviewer'),
     (3, 'Review Completed'),
@@ -22,7 +22,7 @@ function modelreview_install() {
 
   db_query($sql);
 
-  $sql = "INSERT INTO {modelreview_compliance} (`status`, `description`) VALUES
+  $sql = "INSERT INTO {modelreview_compliance} (`cid`, `compliance`) VALUES
     (0, 'Does Not Meet Standards'),
     (1, 'Partially Meets Standards'),
     (2, 'Fully Meets Standards');";
@@ -85,6 +85,12 @@ function modelreview_schema() {
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,),
+      'related' => array(
+        'description' => t('The sid of previous actions related to this action.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,),
       'modelversion_nid' => array(
         'description' => t('The model version node id for the model being reviewed.'),
         'type' => 'int',
@@ -141,14 +147,20 @@ function modelreview_schema() {
         'description' => t('Reviewer notes on the documentation.'),
         'type' => 'text',
         'not null' => FALSE,),
+      'editor_notes' => array(
+        'description' => t('Editor notes for Author.'),
+        'type' => 'text',
+        'not null' => FALSE,),
       'other_notes' => array(
         'description' => t('Reviewer notes to the Editor.'),
         'type' => 'text',
         'not null' => FALSE,),
-      'editor_notes' => array(
-        'description' => t('Editor's notes to the Author.'),
-        'type' => 'text',
-        'not null' => FALSE,),
+      'recommendation' => array(
+        'description' => t('Option list: Reviewer Recommendation'),
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => FALSE,
+        'default' => NULL),
     ),
     'indexes' => array(
       'modelversion_nid'  => array('modelversion_nid'),
@@ -168,8 +180,8 @@ function modelreview_schema() {
         'unsigned' => FALSE,
         'not null' => TRUE,
         'default' => 0),
-      'description' => array(
-        'status' => t('Text description of the status.'),
+      'status' => array(
+        'description' => t('Text description of the status.'),
         'type' => 'varchar',
         'length' => 255,
         'unsigned' => FALSE,
@@ -210,11 +222,11 @@ function modelreview_schema() {
 // and you will need to write a new one 
 // every time you update the .def.inc file
 
-//function modellibrary_update_1() {
+//function modellibrary_update_6011() {
 //    _modellibrary_save_cck_node();
 //    return array();
 //}
-//
+
 //function modellibrary_update_2() {
 //    _modellibrary_save_cck_node();
 //    return array();

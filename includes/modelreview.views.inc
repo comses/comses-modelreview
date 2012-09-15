@@ -95,8 +95,8 @@ function modelreview_views_data()  {
   $data['modelreview_actiondesc']['table']['join'] = array(
     'node' => array(
       'left_table' => 'modelreview_action',
-      'left_field' => 'status',
-      'field' => 'status',
+      'left_field' => 'statusid',
+      'field' => 'statusid',
     ),
   );
 
@@ -170,7 +170,7 @@ function modelreview_views_data()  {
   );
 
   // Model Status Code    
-  $data['modelreview_action']['status'] = array(
+  $data['modelreview_action']['statusid'] = array(
     'title' => t('Status Code'),
     'help' => t('Current model status code for this review action.'),
 
@@ -372,7 +372,7 @@ function modelreview_views_data()  {
    * * * * * * * * * * * * * * * * * * * */
 
   // Model Version Node ID    
-  $data['modelreview_actiondesc']['description'] = array(
+  $data['modelreview_actiondesc']['status'] = array(
     'title' => t('Status Description'),
     'help' => t('Status Description.'),
     'field' => array(

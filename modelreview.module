@@ -33,7 +33,7 @@ function modelreview_help($path, $arg) {
  * Implementation of hook_init()
  */
 function modelreview_init() {
-//  drupal_add_css(drupal_get_path('module', 'modelreview') .'/includes/modelreview.css');
+  drupal_add_css(drupal_get_path('module', 'modelreview') .'/includes/modelreview.css');
 //  drupal_add_js(drupal_get_path('module', 'modelreview') .'/includes/modelreview.js');
 }
 
@@ -67,11 +67,60 @@ function modelreview_views_api() {
 /**
  * Implementation of hook_theme()
  * 
- * Information on this functionality is documented in Advanced Help -> Views ->
- * Views API -> Using default views in your module
  */
-function modelreview_theme($existing) {
+function modelreview_theme() {
   return array(
+    'author_status_page' => array(
+      'arguments' => array(
+        'review' => array(
+          'model_nid' => NULL,
+          'modelversion_nid' => NULL,
+          'rid' => NULL,
+          'sid' => NULL,
+          'related' => NULL,
+          'statusid' => NULL,
+          'statusdate' => NULL,
+          'status' => NULL,
+          'reviewer' => NULL,
+        ),
+      ),
+      'template' => 'author-status-page',
+      'path' => drupal_get_path('module', 'modelreview') .'/tpl',
+    ),
+    'editor_status_page' => array(
+      'arguments' => array(
+        'review' => array(
+          'model_nid' => NULL,
+          'modelversion_nid' => NULL,
+          'rid' => NULL,
+          'sid' => NULL,
+          'related' => NULL,
+          'statusid' => NULL,
+          'statusdate' => NULL,
+          'status' => NULL,
+          'reviewer' => NULL,
+        ),
+      ),
+      'template' => 'editor-status-page',
+      'path' => drupal_get_path('module', 'modelreview') .'/tpl',
+    ),
+    'reviewer_status_page' => array(
+      'arguments' => array(
+        'review' => array(
+          'model_nid' => NULL,
+          'modelversion_nid' => NULL,
+          'rid' => NULL,
+          'sid' => NULL,
+          'related' => NULL,
+          'statusid' => NULL,
+          'statusdate' => NULL,
+          'status' => NULL,
+          'reviewer' => NULL,
+        ),
+      ),
+      'template' => 'reviewer-status-page',
+      'path' => drupal_get_path('module', 'modelreview') .'/tpl',
+    ),
 #    'views_view_fields__modelreviews__page_1' => array(
 #      'arguments' => array('view' => NULL, 'options' => NULL, 'row' => NULL),
 #      'template' => 'views-view-fields--modelreviews--page-1',
@@ -92,27 +141,49 @@ function modelreview_theme($existing) {
  */
 function modelreview_menu() {
 
-  /*$items['model/%/review/'] = array(
-    'title' => 'Review',
-    'description' => "",
-    'page callback' => '_modelreview_step',
-    'page arguments' => array(array(1)),
-    'access callback' => 'model_edit_access',
-    'access arguments' => array('edit', array(1), 'edit own model'),
-    'type' => MENU_CALLBACK,
-  );*/
-
-
   // Review Status page
-  $items['model/%/review/status'] = array(
-    'title' => 'Model Review Status',
+  $items['model/%/review/status/view'] = array(
+    'title' => 'Review Status',
     'description' => "",
     'page callback' => '_modelreview_status_page',
-    //'page arguments' => array('modelreview_request_form', array(1)),
-    'access callback' => '_modelreview_access_content',
-    'access arguments' => array('edit own model'),
-    'type' => MENU_CALLBACK,
+    'page arguments' => array(array(1, 4)),
+    'access callback' => TRUE,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
   );
+/*  $items['model/%/review/status/view'] = array(
+    'title' => 'Review Status',
+    'description' => "",
+    'access callback' => TRUE,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  ); */
+  $items['model/%/review/status/author'] = array(
+    'title' => 'Author View',
+    'description' => "",
+    'page callback' => '_modelreview_status_page',
+    'page arguments' => array(array(1, 4)),
+    'access callback' => TRUE,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
+  );
+  $items['model/%/review/status/editor'] = array(
+    'title' => 'Editor View',
+    'description' => "",
+    'page callback' => '_modelreview_status_page',
+    'page arguments' => array(array(1, 4)),
+    'access callback' => TRUE,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 2,
+  );
+  $items['model/%/review/status/reviewer'] = array(
+    'title' => 'Reviewer View',
+    'description' => "",
+    'page callback' => '_modelreview_status_page',
+    'page arguments' => array(array(1, 4)),
+    'access callback' => TRUE,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 3,
+  ); 
 
 
   // Info on model reviews and request page
@@ -120,23 +191,21 @@ function modelreview_menu() {
     'title' => 'Request A Model Review',
     'description' => "",
     'page callback' => '_modelreview_request_page',
-    //'page arguments' => array('modelreview_request_form', array(1)),
-    'access callback' => '_modelreview_access_content',
-    'access arguments' => array('edit own model'),
+    'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
 
-  $items['model/%/review/assign'] = array(
+/*  $items['model/%/review/assign'] = array(
     'title' => 'Assign Reviewer',
     'description' => "",
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('_modelreview_assignreviewer_form'),
+    'page arguments' => array('modelreview_assignreviewer_form'),
     'access callback' => '_modelreview_access_content',
     'access arguments' => array('edit review'),
     'type' => MENU_CALLBACK,
-  );
+  ); */
 
-  $items['model/%/review/update'] = array(
+/*  $items['model/%/review/update'] = array(
     'title' => 'Perform Review',
     'description' => "",
     'page callback' => 'drupal_get_form',
@@ -144,15 +213,14 @@ function modelreview_menu() {
     'access callback' => '_modelreview_access_content',
     'access arguments' => array('review model'),
     'type' => MENU_CALLBACK,
-  );
+  ); */
 
   $items['model/%/review/%/step'] = array(
     'title' => 'Review',
     'description' => "",
     'page callback' => '_modelreview_step',
-    'page arguments' => array(array(1)),
-    'access callback' => '_modelreview_access_content',
-    'access arguments' => array('review model', 'edit own model'),
+    'page arguments' => array(array(1, 3)),
+    'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
 
@@ -218,18 +286,29 @@ function _modelreview_access_content($perms) {
 /**
  * Implementation of page callback
  *
+ * This redirects the user to the default Status tab.
+ * 
+ */
+function _modelreview_goto_status() {
+  $modelnid = arg(1);
+  drupal_goto('model/'. $modelnid .'/review/status/view');
+}
+
+/**
+ * Implementation of page callback
+ *
  * This is the Review Request Page, which a model author views prior to requesting
  * a review of their model.
  */
 function _modelreview_request_page() {
-  $nid = arg(1);
+  $modelnid = arg(1);
 
   // check if modelversion has been reviewed yet.
   // if not, then provide info on the process.
   // if so, then redirect to the review status page
 
-  $sql = "SELECT COUNT(*) FROM modelreview mr INNER JOIN modelreview_action mra ON mr.review_id = mra.review_id AND mr.review_sid = mra.review_sid WHERE mr.model_nid = %d AND mra.status < 5;";
-  $result = db_query($sql, $nid);
+  $sql = "SELECT COUNT(*) FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mr.sid = mra.sid WHERE mr.model_nid = %d AND mra.statusid < 6;";
+  $result = db_query($sql, $modelnid);
   $review_count = db_result($result);
   //drupal_set_message('review count: '. $review_count);
 
@@ -245,12 +324,12 @@ function _modelreview_request_page() {
   </ol>
   <p>When your model is reviewed, it will be examined to verify it meets all these standards. The reviewer will indicate in the review system whether your model meets these standards. Any elements that require revision will be noted in the comments fields, and if necessary, your model will be flagged for you to revise as needed.</p>
   <p>We urge you to review your model according to these guidelines prior to requesting a review. Once you are confident your model is ready for review, submit your request below.</p>';
-    $content .= '<a href="/model/'. $nid .'/review/1/step"><h4>I wish to request this model be reviewed for Model Certification:</h4></a>
+    $content .= '<a href="/model/'. $modelnid .'/review/1/step"><h4>I wish to request this model be reviewed for Model Certification:</h4></a>
 </div>';
 
     return $content; 
   } else {
-    drupal_goto('model/'. $nid .'/review/status');
+    drupal_goto('model/'. $modelnid .'/review/status/view');
   } 
 }
 
@@ -263,11 +342,11 @@ function _modelreview_request_page() {
  */
 function _modelreview_status_page() {
   global $user;
-  $nid = arg(1);
+  $modelnid = arg(1);
 
   // Determine who is viewing the Status page and the current Review Status Code
   // Lookup the Model author
-  $view_args = array(arg(1));
+  $view_args = array($modelnid);
   $display_id = 'page_6';
   $model = views_get_view('model');
   $model->set_arguments($view_args);
@@ -275,17 +354,40 @@ function _modelreview_status_page() {
   $model->pre_execute();
   $model->execute();
 
-  // Boolean: TRUE when current user is model author and has permission to edit own model, OR when current user is root account
-  $is_model_author = (($user->uid == 1) || (user_access('edit own model') && $user->uid == $model->render_field('uid', 0)));
-  $is_editor = user_access('edit review');
-  $is_reviewer = user_access('review model');
+  // Lookup Review for Assigned Reviewer
+  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer, field_fullname_value as reviewer_name "
+        ."FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 2 "
+        ."INNER JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
+        ."LEFT JOIN node ON reviewer = node.uid AND node.type = 'profile' LEFT JOIN content_type_profile ctp ON node.vid = ctp.vid "
+        ."WHERE mr.model_nid = %d";
+  $result = db_query($sql, arg(1));
+  $row = db_fetch_object($result);
+  $reviewer = $row->reviewer_name;
 
+  if (arg(4) == 'view' || arg(4) == NULL) {
+    // set mode according to rules:
+    // 1. If user owns model being viewed, use Author mode.
+    // 2. If user is assigned as model Reviewer, then use Reviewer mode.
+    // 3. If user is an Editor, then use Editor mode.
+    if ($user->uid == $model->render_field('uid', 0)) {
+      $usermode = 'author';
+    } elseif (user_access('edit review') && $user->uid == $reviewer) {
+      $usermode = 'reviewer';
+    } elseif (($user->uid == 1) || user_access('edit review')) {
+      $usermode = 'editor';
+    } else {
+      drupal_set_message('317: You are not authorized to view this model information.');
+      drupal_goto('page/invalid-request');
+    }
+  } else {
+    $usermode = arg(4); // view status page in this mode (Author, Editor, or Reviewer)
+  }
 
   // lookup the current status of the open 'modelreview' record
-  $sql = 'SELECT mr.review_id, mr.review_sid, mr.model_nid, modelversion_nid, mra.status, mrad.description, statusdate, reviewer FROM `modelreview` mr INNER JOIN `modelreview_action` mra ON mr.review_id = mra.review_id AND mr.review_sid = mra.review_sid INNER JOIN modelreview_actiondesc mrad ON mra.status = mrad.status WHERE mr.model_nid = %d';
+  $sql = 'SELECT mr.rid, mr.sid, mr.model_nid, modelversion_nid, related, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d';
   $result = db_query($sql, $modelnid);
   $row = db_fetch_object($result);
-  $status = $row->status;
+  $status = $row->statusid;
 
 
   /* The nature of the screen displayed depends on user role
@@ -294,7 +396,7 @@ function _modelreview_status_page() {
      Maybe I should allow the Editor and Reviewer views be displayed simultaneously in that scenario. */
 
   // Load Review Status info
-  $view_args = array(arg(1));
+  $view_args = array($modelnid);
   $display_id = 'pane_5';
   $review = views_get_view('modelreviews');
   $review->set_arguments($view_args);
@@ -303,111 +405,213 @@ function _modelreview_status_page() {
   $review->execute();
 
 
-  if ($is_model_author) {
-    // When a Model Author views the status screen:
-    if ($status == NULL) {
-      // No request: Go to info page
-      drupal_goto('model/'. $modelnid .'/review/info'); 
-    }
-    switch ($status) {
-      case 1:
-        // Status 1 (Requested): Show model status
-        $content = '<h3>'. $model->render_field('title', 0) .'</h3>';
-        $content .= '<div>Current Review Status: '. $row->description .'</div>';
-        $content .= '<div>Date of Last Review: '. $row->statusdate .'</div>';
-
-        drupal_set_title('Model Review Status');
-        return $content;
-        break;
-
-      case 2:
-        // Status 2 (Assigned): Show model status
-        $content = '<h3>'. $model->render_field('title', 0) .'</h3>';
-        $content .= '<div>Current Review Status: '. $row->description .'</div>';
-        $content .= '<div>Date of Last Review: '. $row->statusdate .'</div>';
-
-        drupal_set_title('Model Review Status');
-        return $content;
-        break;
-
-      case 3:
-        // Status 3 (Review Completed): Show model status
-        $content = '<h3>'. $model->render_field('title', 0) .'</h3>';
-        $content .= '<div>Current Review Status: '. $row->description .'</div>';
-        $content .= '<div>Date of Last Review: '. $row->statusdate .'</div>';
-
-        drupal_set_title('Model Review Status');
-        return $content;
-        break;
-
-      case 4:
-        // Status 4 (Revision): Show review comments and instructions, button to request a re-review
-        //     Probably should verify latest model version is more recent than the version recorded during Review,
-        //     So author can't request re-review until model has been updated to a newer version.
-        break;
-
-      case 5:
-        // Status 5 (Re-review): Show model status
-        $content = '<h3>'. $model->render_field('title', 0) .'</h3>';
-        $content .= '<div>Current Review Status: '. $row->description .'</div>';
-        $content .= '<div>Date of Last Review: '. $row->statusdate .'</div>';
-
-        drupal_set_title('Model Review Status');
-        return $content;
-        break;
-
-      case 6:
-        // Status 6 (Close - Certified): Show Certification info
-        $content = '<h3>'. $model->render_field('title', 0) .'</h3>';
-        $content .= '<div>Current Review Status: '. $row->description .'</div>';
-        $content .= '<div>Date of Last Review: '. $row->statusdate .'</div>';
-
-        drupal_set_title('Model Review Status');
-        return $content;
-        break;
-
-      case 7:
-        // Status 7 (Close - Denied): Show Denial information
-        $content = '<h3>'. $model->render_field('title', 0) .'</h3>';
-        $content .= '<div>Current Review Status: '. $row->description .'</div>';
-        $content .= '<div>Date of Last Review: '. $row->statusdate .'</div>';
-
-        drupal_set_title('Model Review Status');
-        return $content;
-        break;
-    }
-    
-  } elseif ($is_editor) {
-    // When a Review Editor views the status screen:
-    // No review requested: invalid page
-    // Status 1 (Requested): Assign Case to Reviewer
-    // Status 2 (Assigned): Show model status and who is assigned as Reviewer
-    // Status 3 (Review Completed): Review comments and recommendation, process case (Revise, Close)
-    // Status 4 (Revision): Show model status & history
-    // Status 5 (Re-Review): Show model status & history
-    // Status 6 (Close - Certified): Show model status & history
-    // Status 7 (Close - Denied): Show model status & history
-
-  } elseif ($is_reviewer) {
-    // When a Reviewer views the status screen:
     // Check if user is assigned to case: if not, then invalid page, redirect to model view.
-    // No review requested: invalid page
-    // Status 1: invalid page
-    // Status 2: Show model status info, button: Begin Review
-    // Status 3-7: Thank you for your service
 
+  switch ($usermode) {
+    case 'author':
+      $content = theme('author_status_page', array( 
+        'model_nid' => $modelnid, 
+        'modelversion_nid' => $row->modelversion_nid, 
+        'rid' => $row->rid, 
+        'sid' => $row->sid, 
+        'related' => $row->related, 
+        'statusid' => $row->statusid, 
+        'statusdate' => $row->statusdate, 
+        'status' => $row->status, 
+        'reviewer' => $reviewer,
+      ));
+      break;
+
+    case 'editor':
+      $content = theme('editor_status_page', array(
+        'model_nid' => $modelnid, 
+        'modelversion_nid' => $row->modelversion_nid, 
+        'rid' => $row->rid, 
+        'sid' => $row->sid, 
+        'related' => $row->related, 
+        'statusid' => $row->statusid, 
+        'statusdate' => $row->statusdate, 
+        'status' => $row->status, 
+        'reviewer' => $reviewer,
+      ));
+      break;
+
+    case 'reviewer':
+      $content = theme('reviewer_status_page', array(
+        'model_nid' => $modelnid, 
+        'modelversion_nid' => $row->modelversion_nid, 
+        'rid' => $row->rid, 
+        'sid' => $row->sid, 
+        'related' => $row->related, 
+        'statusid' => $row->statusid, 
+        'statusdate' => $row->statusdate, 
+        'status' => $row->status, 
+        'reviewer' => $reviewer,
+      ));
+      break;
   }
+
+  return $content;
 }
 
-function _modelreview_status_page_submit($form, &$form_state) {
-}
 
-function _modelreview_review_form() {
+function modelreview_review_form() {
   $standards = array(
-    'fully_meets' => t('Fully Meets'),
-    'partial_meets' => t('Partially Meets'),
-    'not_meet' => t('Does Not Meet'),
+    0 => t('Does Not Meet Standards'),
+    1 => t('Partially Meets Standards'),
+    2 => t('Fully Meets Standards'),
   );
+
+  $recommend = array(
+    NULL => '',
+    0 => t('Do Not Certify (Deny)'),
+    1 => t('Revise (Return to Author)'),
+    2 => t('Certify (Accept)'),
+  );
+
+  $sql = 'SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 2 INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d';
+  $result = db_query($sql, arg(1));
+  $row = db_fetch_object($result);
+
+  $form['model_nid'] = array(
+    '#type' => 'hidden',
+    '#value' => arg(1),
+  );
+  $form['rid'] = array(
+    '#type' => 'hidden',
+    '#value' => $row->rid,
+  );
+  $form['reviewer'] = array(
+    '#type' => 'hidden',
+    '#value' => $row->reviewer,
+  );
+
+  $form['view_model'] = array(
+    '#type' => 'item',
+    '#title' => t('View the Model'),
+    '#value' => '<a href="'. url('model/'. arg(1)) .'" target="_blank">Click to view model</a>',
+  );
+
+  $form['code_clean'] = array(
+    '#type' => 'select',
+    '#title' => t('Is the Code Clean/Well-written?'),
+    '#options' => $standards,
+  );
+  $form['code_commented'] = array(
+    '#type' => 'select',
+    '#title' => t('Is the Code Well-Commented?'),
+    '#options' => $standards,
+  );
+  $form['code_notes'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Code Notes'),
+  );
+
+
+  $form['model_documented'] = array(
+    '#type' => 'select',
+    '#title' => t('Is the Model Documented Properly?'),
+    '#options' => $standards,
+  );
+  $form['doc_notes'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Documentation Notes'),
+  );
+
+  $form['model_runs'] = array(
+    '#type' => 'select',
+    '#title' => t('Does the Model Run with the Provided Instructions?'),
+    '#options' => $standards,
+  );
+  $form['run_notes'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Comments on Running the Model'),
+  );
+
+  $form['other_notes'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Other Notes About Model'),
+  );
+
+  $form['recommendation'] = array(
+    '#type' => 'select',
+    '#title' => t('Your Recommendation'),
+    '#options' => $recommend,
+  );
+  $form['editor_notes'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Comments to the Editor (Private)'),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+    '#submit' => array('modelreview_review_form_submit'),
+  );
+
+  return $form;
+}
+
+function modelreview_review_form_submit($form, &$form_state) {
+  global $user;
+  $modelnid = $form_state['values']['model_nid'];
+
+  // get the node id for the latest modelversion, using Views
+  $view_args = array($modelnid); // The display we are using takes an argument
+  $display_id = 'page_1';   // We are accessing the Latest Version display...
+  $view = views_get_view('modelversion'); // ...from the modelversion View
+  $view->set_arguments($view_args); // Send Views the arguments it needs
+  $view->set_display($display_id);  // and tell it which display we are accessing
+  $view->pre_execute(); // run any preprocessing
+  $view->execute(); // then execute the view
+
+  $modelversion_nid = $view->render_field('nid', 0);
+
+  // Insert new 'modelreview_action' record
+  $action_record = array(
+    'rid' => $form_state['values']['rid'],
+    'modelversion_nid' => $modelversion_nid,
+    'reviewer' => $form_state['values']['reviewer'],
+    'statusid' => 3,
+    'statusdate' => time(),
+    'code_clean' => $form_state['values']['code_clean'],
+    'code_commented' => $form_state['values']['code_commented'],
+    'model_documented' => $form_state['values']['model_documented'],
+    'model_runs' => $form_state['values']['model_runs'],
+    'code_notes' => $form_state['values']['code_notes'],
+    'doc_notes' => $form_state['values']['doc_notes'],
+    'other_notes' => $form_state['values']['other_notes'],
+    'editor_notes' => $form_state['values']['editor_notes'],
+    'recommendation' => $form_state['values']['recommendation'],
+  );
+  drupal_write_record('modelreview_action', $action_record);
+
+  // now update 'modelreview' record with action sid
+  $sql = "SELECT mra.sid FROM {modelreview_action} mra WHERE mra.rid = %d ORDER BY mra.statusdate DESC LIMIT 1;";
+  $result = db_query($sql, $form_state['values']['rid']);
+  $review_sid = db_result($result);
+
+  $review_record = array(
+    'rid' => $form_state['values']['rid'],
+    'sid' => $review_sid,
+  );
+  drupal_write_record('modelreview', $review_record, 'rid');
+
+  drupal_goto('model/'. $modelnid .'/review/status/view'); 
+}
+
+function modelreview_assignreviewer_form() {
+  $options[NULL] = '';
+  $sql = "SELECT u.uid, u.name, ctp.field_fullname_value AS fullname ". 
+         "FROM users u INNER JOIN users_roles ur ON u.uid = ur.uid ".
+         "INNER JOIN permission p ON ur.rid = p.rid ".
+         "LEFT JOIN node nu ON u.uid = nu.uid AND nu.type = 'profile' ".
+         "LEFT JOIN content_type_profile ctp ON nu.vid = ctp.vid ".
+         "WHERE p.perm like '%%%s%%'";
+  $results = db_query($sql, 'review model');
+  while ($row = db_fetch_object($results)) {
+    $options[$row->uid] = $row->fullname;
+  }
 
   $form['model_nid'] = array(
     '#type' => 'hidden',
@@ -419,75 +623,26 @@ function _modelreview_review_form() {
     '#title' => t('View the Model'),
     '#value' => '<a href="'. url('model/'. arg(1)) .'" target="_blank">Click to view model</a>',
   );
-
-
-  $form['code_clean'] = array(
+  $form['reviewer'] = array(
     '#type' => 'select',
-    '#title' => t('Is the Code Clean/Well-written?'),
-    'options' => $standards,
-  );
-  $form['code_commented'] = array(
-    '#type' => 'select',
-    '#title' => t('Is the Code Well-Commented?'),
-    'options' => $standards,
-  );
-  $form['code_notes'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Code Notes'),
-  );
-
-
-  $form['model_documented'] = array(
-    '#type' => 'select',
-    '#title' => t('Is the Model Documented Properly?'),
-    'options' => $standards,
-  );
-  $form['doc_notes'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Documentation Notes'),
-  );
-
-  $form['model_runs'] = array(
-    '#type' => 'select',
-    '#title' => t('Does the Model Run with the Provided Instructions?'),
-    'options' => $standards,
-  );
-  $form['run_notes'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Running Notes'),
-  );
-
-  $form['other_notes'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Other Notes'),
-  );
-
-  $form['recommendation'] = array(
-    '#type' => 'select',
-    '#title' => t('Other Notes'),
-    'options' => $standards,
-  );
-  $form['editor_notes'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Comments to the Editor (Private)'),
+    '#title' => t('Assign Reviewer'),
+    '#options' => $options,
   );
 
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Submit'),
-    '#submit' => array('_modelreview_review_form_submit'),
   );
 
   return $form;
 }
 
-function _modelreview_review_form_submit_revise($form, &$form_state) {
-  // save new modelreview_action with status 3
+function modelreview_assignreviewer_form_submit($form, &$form_state) {
   global $user;
   $modelnid = $form_state['values']['model_nid'];
 
-  // lookup the review_id for the open 'modelreview' record
-  $sql = "SELECT mr.review_id FROM modelreview mr INNER JOIN modelreview_action mra ON mr.review_id = mra.review_id AND mr.review_sid = mra.review_sid WHERE mr.model_nid = %d;";
+  // lookup the rid for the open 'modelreview' record
+  $sql = "SELECT mr.rid FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mr.sid = mra.sid WHERE mr.model_nid = %d;";
   $result = db_query($sql, $modelnid);
   $review_id = db_result($result);
 
@@ -504,40 +659,52 @@ function _modelreview_review_form_submit_revise($form, &$form_state) {
 
   // Insert new 'modelreview_action' record
   $action_record = array(
-    'review_id' => $review_id,
+    'rid' => $review_id,
     'modelversion_nid' => $modelversion_nid,
-    'reviewer' => $user->uid,
-    'status' => 3,
+    'reviewer' => $form_state['values']['reviewer'],
+    'statusid' => 2,
     'statusdate' => time(),
-    'code_clean' => $form_state['values']['code_clean'],
-    'code_commented' => $form_state['values']['code_commented'],
-    'model_documented' => $form_state['values']['model_documented'],
-    'model_runs' => $form_state['values']['model_runs'],
-    'code_notes' => $form_state['values']['code_notes'],
-    'doc_notes' => $form_state['values']['doc_notes'],
-    'other_notes' => $form_state['values']['other_notes'],
   );
   drupal_write_record('modelreview_action', $action_record);
 
   // now update 'modelreview' record with action sid
-  $sql = "SELECT mra.review_sid FROM {modelreview_action} mra WHERE mra.review_id = %d ORDER BY mra.statusdate DESC LIMIT 1;";
+  $sql = "SELECT mra.sid FROM {modelreview_action} mra WHERE mra.rid = %d ORDER BY mra.statusdate DESC LIMIT 1;";
   $result = db_query($sql, $review_id);
   $review_sid = db_result($result);
 
   $review_record = array(
-    'review_id' => $review_id,
-    'review_sid' => $review_sid,
+    'rid' => $review_id,
+    'sid' => $review_sid,
   );
-  drupal_write_record('modelreview', $review_record, 'review_id');
+  drupal_write_record('modelreview', $review_record, 'rid');
 
-  drupal_goto('model/'. $modelnid .'/review/status'); 
+  drupal_goto('model/'. $modelnid .'/review/status/view'); 
+
 }
 
-function _modelreview_assignreviewer_form() {
-  $form['reviewer'] = array(
+
+
+function modelreview_editor_process_form() {
+  $decision = array(
+    NULL => '',
+    0 => t('Do Not Certify (Deny)'),
+    1 => t('Revise (Return to Author)'),
+    2 => t('Certify (Accept)'),
+  );
+
+  $form['model_nid'] = array(
+    '#type' => 'hidden',
+    '#value' => arg(1),
+  );
+
+  $form['decision'] = array(
     '#type' => 'select',
-    '#title' => t('Assign Reviewer'),
-    'options' => $reviewers,
+    '#title' => t('Take Action'),
+    '#options' => $decision,
+  );
+  $form['editor_notes'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Instructions to the Model Author'),
   );
 
   $form['submit'] = array(
@@ -547,6 +714,84 @@ function _modelreview_assignreviewer_form() {
 
   return $form;
 }
+
+function modelreview_editor_process_form_submit($form, &$form_state) {
+  global $user;
+  $modelnid = $form_state['values']['model_nid'];
+
+  // lookup the rid for the open 'modelreview' record
+  $sql = "SELECT mr.rid FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mr.sid = mra.sid WHERE mr.model_nid = %d;";
+  $result = db_query($sql, $modelnid);
+  $review_id = db_result($result);
+
+  // get the node id for the latest modelversion, using Views
+  $view_args = array($modelnid); // The display we are using takes an argument
+  $display_id = 'page_1';   // We are accessing the Latest Version display...
+  $view = views_get_view('modelversion'); // ...from the modelversion View
+  $view->set_arguments($view_args); // Send Views the arguments it needs
+  $view->set_display($display_id);  // and tell it which display we are accessing
+  $view->pre_execute(); // run any preprocessing
+  $view->execute(); // then execute the view
+
+  $modelversion_nid = $view->render_field('nid', 0);
+
+
+  // we need to lookup the review actions that have been submitted for the editor to review
+  // they will be actions that have not been associated ('related') to any editor actions
+  $sql = 'SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, 
+                FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 3
+                INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d AND related = NULL';
+  $reviews = db_query($sql, $review['model_nid']);
+  // after we add our editor action, we will need to update these review actions to point (via 'related') to our new editor action
+
+  // determine the status id that will need to be recorded here.
+  switch ($form_state['values']['decision']) {
+    case 0:
+      $step = 7;
+      break;
+
+    case 1:
+      $step = 4;
+      break;
+
+    case 2:
+      $step = 6;
+      break;
+  }
+
+  // Insert new 'modelreview_action' record
+  $action_record = array(
+    'rid' => $review_id,
+    'modelversion_nid' => $modelversion_nid,
+    //'reviewer' => $form_state['values']['reviewer'],
+    'statusid' => $step,
+    'statusdate' => time(),
+    'editor_notes' => $form_state['values']['editor_notes'],
+  );
+  drupal_write_record('modelreview_action', $action_record);
+
+  // now update 'modelreview' record with action sid
+  $sql = "SELECT mra.sid FROM {modelreview_action} mra WHERE mra.rid = %d ORDER BY mra.statusdate DESC LIMIT 1;";
+  $result = db_query($sql, $review_id);
+  $action_sid = db_result($result);
+
+  $review_record = array(
+    'rid' => $review_id,
+    'sid' => $action_sid,
+  );
+  drupal_write_record('modelreview', $review_record, 'rid');
+
+  // and update any related review actions with the sid of the new editor action we just created
+  $sql = "UPDATE {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 3 "
+         ."SET related = %d WHERE mr.model_nid = %d AND mra.related IS NULL";
+  db_query($sql, $action_sid, $modelnid);
+
+  drupal_goto('model/'. $modelnid .'/review/status/view'); 
+
+}
+
+
+
 
 function _modelreview_step() {
   global $user;
@@ -564,29 +809,29 @@ function _modelreview_step() {
       // Verify model does not have an open Review case.
           // "Only one per customer, please." (per model, at one time)
           // Otherwise redirect to Status page with error about an open case already present.
-      $sql = "SELECT COUNT(*) FROM modelreview mr INNER JOIN modelreview_action mra ON mr.review_id = mra.review_id AND mr.review_sid = mra.review_sid WHERE mr.model_nid = %d AND mra.status < 5;";
+      $sql = "SELECT COUNT(*) FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mr.sid = mra.sid WHERE mr.model_nid = %d AND mra.statusid < 6;";
       $result = db_query($sql, $nid);
       $review_count = db_result($result);
 
       if ($review_count > 0) {
         // An open review case already exists
         drupal_set_message("Error: This model already has an open Review in progress.");
-        $dest = 'model/'. $modelnid .'/review/status';
+        $dest = 'model/'. $modelnid .'/review/status/view';
       } else {
         // Insert new 'modelreview' record
         $review_record = array(
-          'review_id' => NULL,
-          'review_sid' => 0,
+          'rid' => NULL,
+          'sid' => 0,
           'model_nid' => $modelnid,
         );
         drupal_write_record('modelreview', $review_record);
 
-        // now lookup the review_id for the new 'modelreview' record
-        $sql = "SELECT mr.review_id FROM modelreview mr WHERE mr.model_nid = %d ORDER BY mr.review_id DESC LIMIT 1;";
+        // now lookup the rid for the new 'modelreview' record
+        $sql = "SELECT mr.rid FROM modelreview mr WHERE mr.model_nid = %d ORDER BY mr.rid DESC LIMIT 1;";
         $result = db_query($sql, $modelnid);
         $review_id = db_result($result);
-        //drupal_set_message('review_id: '. $review_id);
-        //watchdog('modelreview', 'review_id: @reviewid', array('@reviewid' => $review_id), WATCHDOG_NOTICE);
+        //drupal_set_message('rid: '. $review_id);
+        //watchdog('modelreview', 'rid: @reviewid', array('@reviewid' => $review_id), WATCHDOG_NOTICE);
 
         // get the node id for the latest modelversion, using Views
         $view_args = array($modelnid); // The display we are using takes an argument
@@ -603,26 +848,26 @@ function _modelreview_step() {
 
         // Insert new 'modelreview_action' record
         $action_record = array(
-          'review_id' => $review_id,
+          'rid' => $review_id,
           'modelversion_nid' => $modelversion_nid,
-          'status' => 1,
+          'statusid' => 1,
           'statusdate' => time(),
         );
         drupal_write_record('modelreview_action', $action_record);
 
         // now update 'modelreview' record with action sid
-        $sql = "SELECT mra.review_sid FROM {modelreview_action} mra WHERE mra.review_id = %d ORDER BY mra.statusdate DESC LIMIT 1;";
+        $sql = "SELECT mra.sid FROM {modelreview_action} mra WHERE mra.rid = %d ORDER BY mra.statusdate DESC LIMIT 1;";
         $result = db_query($sql, $review_id);
         $review_sid = db_result($result);
         //drupal_set_message('review_sid: '. $review_sid);
 
         $review_record = array(
-          'review_id' => $review_id,
-          'review_sid' => $review_sid,
+          'rid' => $review_id,
+          'sid' => $review_sid,
         );
-        drupal_write_record('modelreview', $review_record, 'review_id');
+        drupal_write_record('modelreview', $review_record, 'rid');
 
-        $dest = 'model/'. $modelnid .'/review/status';
+        $dest = 'model/'. $modelnid .'/review/status/view';
       }
       break;
 
@@ -640,11 +885,11 @@ function _modelreview_step() {
       // (plus count of active reviews assigned to each?)
 
       // lookup the review_id for the open 'modelreview' record
-      $sql = "SELECT mr.review_id FROM modelreview mr INNER JOIN modelreview_action mra ON mr.review_id = mra.review_id AND mr.review_sid = mra.review_sid WHERE mr.model_nid = %d;";
+      $sql = "SELECT mr.rid FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mr.sid = mra.sid WHERE mr.model_nid = %d;";
       $result = db_query($sql, $modelnid);
       $review_id = db_result($result);
-      //drupal_set_message('review_id: '. $review_id);
-      //watchdog('modelreview', 'review_id: @reviewid', array('@reviewid' => $review_id), WATCHDOG_NOTICE);
+      //drupal_set_message('rid: '. $review_id);
+      //watchdog('modelreview', 'rid: @reviewid', array('@reviewid' => $review_id), WATCHDOG_NOTICE);
 
       // get the node id for the latest modelversion, using Views
       $view_args = array($modelnid); // The display we are using takes an argument
@@ -659,29 +904,29 @@ function _modelreview_step() {
 
       // Insert new 'modelreview_action' record
       $action_record = array(
-        'review_id' => $review_id,
+        'rid' => $review_id,
         'modelversion_nid' => $modelversion_nid,
         'reviewer' => $user->uid, // this needs to be form field value for the selected Reviewer
-        'status' => 2,
+        'statusid' => 2,
         'statusdate' => time(),
       );
       drupal_write_record('modelreview_action', $action_record);
 
       // now update 'modelreview' record with action sid
-      $sql = "SELECT mra.review_sid FROM {modelreview_action} mra WHERE mra.review_id = %d ORDER BY mra.statusdate DESC LIMIT 1;";
+      $sql = "SELECT mra.sid FROM {modelreview_action} mra WHERE mra.rid = %d ORDER BY mra.statusdate DESC LIMIT 1;";
       $result = db_query($sql, $review_id);
       $review_sid = db_result($result);
 
       $review_record = array(
-        'review_id' => $review_id,
-        'review_sid' => $review_sid,
+        'rid' => $review_id,
+        'sid' => $review_sid,
       );
-      drupal_write_record('modelreview', $review_record, 'review_id');
+      drupal_write_record('modelreview', $review_record, 'rid');
 
       // When model is assigned, send notification to assigned reviewer.
 
       // transfer user to Review Status page
-      $dest = 'model/'. $modelnid .'/review/status';
+      $dest = 'model/'. $modelnid .'/review/status/view';
       break;
 
     // case 3:
@@ -689,16 +934,18 @@ function _modelreview_step() {
 
     // case 4:
       // Editor sends model review to Author for Revisions
+      //     Probably should verify latest model version is more recent than the version recorded during Review,
+      //     So author can't request re-review until model has been updated to a newer version.
 
     case 5:
       // Changes Completed, Revisions Needed
       
-      // lookup the review_id for the open 'modelreview' record
-      $sql = "SELECT mr.review_id FROM modelreview mr INNER JOIN modelreview_action mra ON mr.review_id = mra.review_id AND mr.review_sid = mra.review_sid WHERE mr.model_nid = %d;";
+      // lookup the rid for the open 'modelreview' record
+      $sql = "SELECT mr.rid FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mr.sid = mra.sid WHERE mr.model_nid = %d;";
       $result = db_query($sql, $modelnid);
       $review_id = db_result($result);
-      //drupal_set_message('review_id: '. $review_id);
-      //watchdog('modelreview', 'review_id: @reviewid', array('@reviewid' => $review_id), WATCHDOG_NOTICE);
+      //drupal_set_message('rid: '. $review_id);
+      //watchdog('modelreview', 'rid: @reviewid', array('@reviewid' => $review_id), WATCHDOG_NOTICE);
 
       // get the node id for the latest modelversion, using Views
       $view_args = array($modelnid); // The display we are using takes an argument
@@ -713,27 +960,27 @@ function _modelreview_step() {
 
       // Insert new 'modelreview_action' record
       $action_record = array(
-        'review_id' => $review_id,
+        'rid' => $review_id,
         'modelversion_nid' => $modelversion_nid,
         'reviewer' => $user->uid,
-        'status' => 4,
+        'statusid' => 5,
         'statusdate' => time(),
       );
       drupal_write_record('modelreview_action', $action_record);
 
       // now update 'modelreview' record with action sid
-      $sql = "SELECT mra.review_sid FROM {modelreview_action} mra WHERE mra.review_id = %d ORDER BY mra.statusdate DESC LIMIT 1;";
+      $sql = "SELECT mra.sid FROM {modelreview_action} mra WHERE mra.rid = %d ORDER BY mra.statusdate DESC LIMIT 1;";
       $result = db_query($sql, $review_id);
       $review_sid = db_result($result);
 
       $review_record = array(
-        'review_id' => $review_id,
-        'review_sid' => $review_sid,
+        'rid' => $review_id,
+        'sid' => $review_sid,
       );
-      drupal_write_record('modelreview', $review_record, 'review_id');
+      drupal_write_record('modelreview', $review_record, 'rid');
 
       // transfer user to Review form
-      $dest = 'model/'. $modelnid .'/review/status';
+      $dest = 'model/'. $modelnid .'/review/status/view';
       break;
 
     // case 6:

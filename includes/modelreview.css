@@ -1,3 +1,54 @@
+.modelreview-section {
+  margin: 1em 0;
+  border: 1px solid #C4C4C4;
+  padding: 0.5em 1em !important;
+  -moz-border-radius: 4px;
+  -webkit-border-radius: 4px;
+  border-radius: 4px;
+}
+
+.modelreview-section-head {
+  font-weight: bold;
+  font-size: 1.4em;
+  line-height: 1.6em;
+}
+
+.modelreview-block {
+  margin: 1em 0;
+}
+
+.modelreview-block-head {
+  font-size: 1.4em;
+  line-height: 1.6em;
+}
+
+.modelreview-field {
+ display: block; 
+ margin: 0.5em 1em;
+}
+
+.modelreview-label {
+  font-weight: bold;
+  display: inline;
+  font-size: 1.1em;
+  line-height: 1.3em;
+}
+
+.modelreview-value {
+  display: inline;
+}
+
+.modelreview-textvalue {
+  margin: 0.5em 1em 0 1em;
+}
+
+
+
+
+
+
+
+
 .review-button {
   color: black !important;
   background: silver;
