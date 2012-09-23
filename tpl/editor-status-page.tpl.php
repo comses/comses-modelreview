@@ -32,13 +32,14 @@
   $model->execute();
 ?>
 
-<?php drupal_set_title('(Editor) Model Review Status'); ?>
+<?php drupal_set_title('Model Review Status'); ?>
 
 <div id="modelreview-<?php print $review['rid']; ?>" class="<?php print $classes; ?> clearfix">
   <?php print $user_picture; ?>
 
   <?php if ($model->render_field('title', 0)): ?>
     <h2 class="title"><a href="<?php print base_path() .'model/'. $review['model_nid'] ?>" target="_blank"><?php print $model->render_field('title', 0); ?></a></h2>
+    <div class="model-review-title-link"><a href="<?php print base_path() .'model/'. $review['model_nid'] ?>" target="_blank"><?php print t('(View Model in New Window)'); ?></a></div>
   <?php endif; ?>
 
   <?php if ($unpublished): ?>
@@ -96,6 +97,7 @@
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Assigned Reviewer:</div>';
       print '      <div class="modelreview-value">'. $review['reviewer'] .'</div>';
+      print '    </div>';
       print '  </div>';
 
       break;
