@@ -22,14 +22,12 @@
 ?>
 
 <?php  // Determine who is viewing the Status page and the current Review Status Code
-  // Lookup the Model author
-  $view_args = array($review['model_nid']);
-  $display_id = 'page_6';
-  $model = views_get_view('model');
-  $model->set_arguments($view_args);
-  $model->set_display($display_id);
-  $model->pre_execute();
-  $model->execute();
+  // Lookup the Model
+  $sql = 'SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = %d';
+  $result = db_query($sql, $review['model_nid']);
+  $row = db_fetch_object($result);
+  $author = $row->author;
+  $title = $row->title;
 ?>
 
 <?php drupal_set_title('Model Review Status'); ?>
@@ -37,8 +35,8 @@
 <div id="modelreview-<?php print $review['rid']; ?>" class="<?php print $classes; ?> clearfix">
   <?php print $user_picture; ?>
 
-  <?php if ($model->render_field('title', 0)): ?>
-    <h2 class="title"><a href="<?php print base_path() .'model/'. $review['model_nid'] ?>" target="_blank"><?php print $model->render_field('title', 0); ?></a></h2>
+  <?php if ($title): ?>
+    <h2 class="title"><a href="<?php print base_path() .'model/'. $review['model_nid'] ?>" target="_blank"><?php print $title; ?></a></h2>
     <div class="model-review-title-link"><a href="<?php print base_path() .'model/'. $review['model_nid'] ?>" target="_blank"><?php print t('(View Model in New Window)'); ?></a></div>
   <?php endif; ?>
 

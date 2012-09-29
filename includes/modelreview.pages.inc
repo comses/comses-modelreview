@@ -45,15 +45,12 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
     $review_id = db_result($result);
 
     // get the node id for the latest modelversion, using Views
-    $view_args = array($modelnid); // The display we are using takes an argument
-    $display_id = 'page_1';   // We are accessing the Latest Version display...
-    $view = views_get_view('modelversion'); // ...from the modelversion View
-    $view->set_arguments($view_args); // Send Views the arguments it needs
-    $view->set_display($display_id);  // and tell it which display we are accessing
-    $view->pre_execute(); // run any preprocessing
-    $view->execute(); // then execute the view
-
-    $modelversion_nid = $view->render_field('nid', 0);
+    $sql = "SELECT node.nid FROM node node LEFT JOIN content_type_modelversion ctmv ON node.vid = ctmv.vid "
+          ."LEFT JOIN content_type_modelversion ctmvn ON node.vid = ctmvn.vid "
+          ."WHERE node.type = 'modelversion' AND node.status = 1 AND ctmv.field_modelversion_modelnid_value = 2222 "
+          ."ORDER BY ctmvn.field_modelversion_number_value DESC LIMIT 1";
+    $result = db_query($sql, $modelnid);
+    $modelversion_nid = db_result($result);
 
     // Insert new 'modelreview_action' record
     $action_record = array(
@@ -76,16 +73,15 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
     drupal_write_record('modelreview', $review_record, 'rid');
 
     // notify all Editors
-    $view_args = array($modelnid);
-    $display_id = 'page_6';
-    $model = views_get_view('model');
-    $model->set_arguments($view_args);
-    $model->set_display($display_id);
-    $model->pre_execute();
-    $model->execute();
+    
+    // lookup model node
+    $sql = 'SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = %d';
+    $result = db_query($sql, $modelnid);
+    $row = db_fetch_object($result);
+    $title = $row->title;
 
     $subject = "Model Review has been requested";
-    $body = 'The author of the model, "'. $model->render_field('title', 0) .'", has requested a Model Review. A Reviewer needs to be assigned to this case, in order for it to proceed. You may access this case by visiting: '. l("http://dev.comses.asu.edu/model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
+    $body = 'The author of the model, "'. $title .'", has requested a Model Review. A Reviewer needs to be assigned to this case, in order for it to proceed. You may access this case by visiting: '. l("http://dev.comses.asu.edu/model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
 
     $sql = "SELECT u.uid, u.name FROM users u INNER JOIN users_roles ur ON u.uid = ur.uid "
           ."INNER JOIN permission p ON ur.rid = p.rid WHERE p.perm like '%%%s%%'";
@@ -144,15 +140,12 @@ function modelreview_assignreviewer_form_submit($form, &$form_state) {
   $reviewer = $row->reviewer;
 
   // get the node id for the latest modelversion, using Views
-  $view_args = array($modelnid); // The display we are using takes an argument
-  $display_id = 'page_1';   // We are accessing the Latest Version display...
-  $view = views_get_view('modelversion'); // ...from the modelversion View
-  $view->set_arguments($view_args); // Send Views the arguments it needs
-  $view->set_display($display_id);  // and tell it which display we are accessing
-  $view->pre_execute(); // run any preprocessing
-  $view->execute(); // then execute the view
-
-  $modelversion_nid = $view->render_field('nid', 0);
+  $sql = "SELECT node.nid FROM node node LEFT JOIN content_type_modelversion ctmv ON node.vid = ctmv.vid "
+        ."LEFT JOIN content_type_modelversion ctmvn ON node.vid = ctmvn.vid "
+        ."WHERE node.type = 'modelversion' AND node.status = 1 AND ctmv.field_modelversion_modelnid_value = 2222 "
+        ."ORDER BY ctmvn.field_modelversion_number_value DESC LIMIT 1";
+  $result = db_query($sql, $modelnid);
+  $modelversion_nid = db_result($result);
 
   // Insert new 'modelreview_action' record
   $action_record = array(
@@ -176,16 +169,14 @@ function modelreview_assignreviewer_form_submit($form, &$form_state) {
   drupal_write_record('modelreview', $review_record, 'rid');
 
   // notify the Assigned Reviewer
-  $view_args = array($modelnid);
-  $display_id = 'page_6';
-  $model = views_get_view('model');
-  $model->set_arguments($view_args);
-  $model->set_display($display_id);
-  $model->pre_execute();
-  $model->execute();
+  // lookup model node
+  $sql = 'SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = %d';
+  $result = db_query($sql, $modelnid);
+  $row = db_fetch_object($result);
+  $title = $row->title;
 
   $subject = "You have been assigned a new Model Review case";
-  $body = 'You have been assigned a new Model Review case for the model, "'. $model->render_field('title', 0) .'". You may access this review case by visiting: '. l("http://dev.comses.asu.edu/model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
+  $body = 'You have been assigned a new Model Review case for the model, "'. $title .'". You may access this review case by visiting: '. l("http://dev.comses.asu.edu/model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
   notifications_lite_send($form_state['values']['reviewer'], $subject, $body);
 
   drupal_goto('model/'. $modelnid .'/review/status'); 
@@ -289,15 +280,12 @@ function modelreview_review_form_submit($form, &$form_state) {
   $modelnid = $form_state['values']['model_nid'];
 
   // get the node id for the latest modelversion, using Views
-  $view_args = array($modelnid); // The display we are using takes an argument
-  $display_id = 'page_1';   // We are accessing the Latest Version display...
-  $view = views_get_view('modelversion'); // ...from the modelversion View
-  $view->set_arguments($view_args); // Send Views the arguments it needs
-  $view->set_display($display_id);  // and tell it which display we are accessing
-  $view->pre_execute(); // run any preprocessing
-  $view->execute(); // then execute the view
-
-  $modelversion_nid = $view->render_field('nid', 0);
+  $sql = "SELECT node.nid FROM node node LEFT JOIN content_type_modelversion ctmv ON node.vid = ctmv.vid "
+        ."LEFT JOIN content_type_modelversion ctmvn ON node.vid = ctmvn.vid "
+        ."WHERE node.type = 'modelversion' AND node.status = 1 AND ctmv.field_modelversion_modelnid_value = 2222 "
+        ."ORDER BY ctmvn.field_modelversion_number_value DESC LIMIT 1";
+  $result = db_query($sql, $modelnid);
+  $modelversion_nid = db_result($result);
 
   // Insert new 'modelreview_action' record
   $action_record = array(
@@ -330,16 +318,14 @@ function modelreview_review_form_submit($form, &$form_state) {
   drupal_write_record('modelreview', $review_record, 'rid');
 
   // notify all Editors
-  $view_args = array($modelnid);
-  $display_id = 'page_6';
-  $model = views_get_view('model');
-  $model->set_arguments($view_args);
-  $model->set_display($display_id);
-  $model->pre_execute();
-  $model->execute();
+  // lookup model node
+  $sql = 'SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = %d';
+  $result = db_query($sql, $modelnid);
+  $row = db_fetch_object($result);
+  $title = $row->title;
 
   $subject = "Model Review has been completed";
-  $body = 'The model review case for the model, "'. $model->render_field('title', 0) .'", has been completed by the assigned Reviewer. The reviewer\'s notes and recommendation need to be processed by an Editor, and the case processed as needed. You may access this review case by browsing: '. l("http://dev.comses.asu.edu/model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
+  $body = 'The model review case for the model, "'. $title .'", has been completed by the assigned Reviewer. The reviewer\'s notes and recommendation need to be processed by an Editor, and the case processed as needed. You may access this review case by browsing: '. l("http://dev.comses.asu.edu/model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
 
   $sql = "SELECT u.uid, u.name FROM users u INNER JOIN users_roles ur ON u.uid = ur.uid "
         ."INNER JOIN permission p ON ur.rid = p.rid WHERE p.perm like '%%%s%%'";
@@ -400,16 +386,12 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
   $reviewer = $row->reviewer;
 
   // get the node id for the latest modelversion, using Views
-  $view_args = array($modelnid); // The display we are using takes an argument
-  $display_id = 'page_1';   // We are accessing the Latest Version display...
-  $view = views_get_view('modelversion'); // ...from the modelversion View
-  $view->set_arguments($view_args); // Send Views the arguments it needs
-  $view->set_display($display_id);  // and tell it which display we are accessing
-  $view->pre_execute(); // run any preprocessing
-  $view->execute(); // then execute the view
-
-  $modelversion_nid = $view->render_field('nid', 0);
-
+  $sql = "SELECT node.nid FROM node node LEFT JOIN content_type_modelversion ctmv ON node.vid = ctmv.vid "
+        ."LEFT JOIN content_type_modelversion ctmvn ON node.vid = ctmvn.vid "
+        ."WHERE node.type = 'modelversion' AND node.status = 1 AND ctmv.field_modelversion_modelnid_value = 2222 "
+        ."ORDER BY ctmvn.field_modelversion_number_value DESC LIMIT 1";
+  $result = db_query($sql, $modelnid);
+  $modelversion_nid = db_result($result);
 
   // we need to lookup the review actions that have been submitted for the editor to review
   // they will be actions that have not been associated ('related') to any editor actions
@@ -462,33 +444,32 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
   db_query($sql, $action_sid, $modelnid);
 
   // Lookup the Model author
-  $view_args = array($modelnid);
-  $display_id = 'page_6';
-  $model = views_get_view('model');
-  $model->set_arguments($view_args);
-  $model->set_display($display_id);
-  $model->pre_execute();
-  $model->execute();
+  // lookup model node
+  $sql = 'SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = %d';
+  $result = db_query($sql, $modelnid);
+  $row = db_fetch_object($result);
+  $title = $row->title;
+  $author = $row->uid;
 
   // notify the Author about this action
   switch ($form_state['values']['decision']) {
     case 0:
       $subject = "Model Review has been completed, Certification Denied";
-      $body = 'The model review case for your model, "'. $model->render_field('title', 0) .'", has been completed by a CoMSES Reviewer. Unfortunately, After reviewing your case, your model has been determined to meet CoMSES Modeling Best-Practices and your model cannot be certified. For more information on this please visit the Model Review Status Page at: '. l("http://dev.comses.asu.edu/model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
+      $body = 'The model review case for your model, "'. $title .'", has been completed by a CoMSES Reviewer. Unfortunately, After reviewing your case, your model has been determined to meet CoMSES Modeling Best-Practices and your model cannot be certified. For more information on this please visit the Model Review Status Page at: '. l("http://dev.comses.asu.edu/model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
       break;
 
     case 1:
       $subject = "Model Review has been completed, Revisions Requested";
-      $body = 'The model review case for your model, "'. $model->render_field('title', 0) .'", has been completed by the assigned Reviewer. Before your model can be certified, the CoMSES Reviewer has requested some revisions be made to your model in order to fully meet Modeling Best Practes. To review the notes and recommendation for your case, please visit the Model Review Status Page at: '. l("http://dev.comses.asu.edu/model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
+      $body = 'The model review case for your model, "'. $title .'", has been completed by the assigned Reviewer. Before your model can be certified, the CoMSES Reviewer has requested some revisions be made to your model in order to fully meet Modeling Best Practes. To review the notes and recommendation for your case, please visit the Model Review Status Page at: '. l("http://dev.comses.asu.edu/model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
       break;
 
     case 2:
       $subject = "Model Review has been completed, Certified";
-      $body = 'The model review case for your model, "'. $model->render_field('title', 0) .'", has been completed by a CoMSES Reviewer. After reviewing your case, your model has been determined to meet CoMSES Modeling Best-Practices and is now Certified. You may access this review case by visiting the Model Review Status Page at: '. l("http://dev.comses.asu.edu/model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
+      $body = 'The model review case for your model, "'. $title .'", has been completed by a CoMSES Reviewer. After reviewing your case, your model has been determined to meet CoMSES Modeling Best-Practices and is now Certified. You may access this review case by visiting the Model Review Status Page at: '. l("http://dev.comses.asu.edu/model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
       break;
   }
 
-  //notifications_lite_send($model->render_field('uid', 0), $subject, $body);
+  //notifications_lite_send($author, $subject, $body);
 
   drupal_goto('model/'. $modelnid .'/review/status'); 
 
@@ -522,15 +503,12 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
   $reviewer = $row->reviewer;
 
   // get the node id for the latest modelversion, using Views
-  $view_args = array($modelnid); // The display we are using takes an argument
-  $display_id = 'page_1';   // We are accessing the Latest Version display...
-  $view = views_get_view('modelversion'); // ...from the modelversion View
-  $view->set_arguments($view_args); // Send Views the arguments it needs
-  $view->set_display($display_id);  // and tell it which display we are accessing
-  $view->pre_execute(); // run any preprocessing
-  $view->execute(); // then execute the view
-
-  $modelversion_nid = $view->render_field('nid', 0);
+  $sql = "SELECT node.nid FROM node node LEFT JOIN content_type_modelversion ctmv ON node.vid = ctmv.vid "
+        ."LEFT JOIN content_type_modelversion ctmvn ON node.vid = ctmvn.vid "
+        ."WHERE node.type = 'modelversion' AND node.status = 1 AND ctmv.field_modelversion_modelnid_value = 2222 "
+        ."ORDER BY ctmvn.field_modelversion_number_value DESC LIMIT 1";
+  $result = db_query($sql, $modelnid);
+  $modelversion_nid = db_result($result);
 
   // Insert new 'modelreview_action' record
   $action_record = array(

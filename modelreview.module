@@ -22,7 +22,7 @@
 /**
  * Include the module forms
  */
-module_load_include('inc', 'modelreview', 'includes/modelreview.forms');
+module_load_include('inc', 'modelreview', 'includes/modelreview.pages');
 
 /**
  * Implementation of hook_help()
@@ -97,6 +97,15 @@ function modelreview_theme() {
         ),
       ),
       'template' => 'reviewer-status-page',
+      'path' => drupal_get_path('module', 'modelreview') .'/tpl',
+    ),
+    'request_review_page' => array(
+      'arguments' => array(
+        'review' => array(
+          'model_nid' => NULL,
+        ),
+      ),
+      'template' => 'request-review-page',
       'path' => drupal_get_path('module', 'modelreview') .'/tpl',
     ),
     'review_queues_page' => array(
@@ -230,23 +239,21 @@ function modelreview_perm() {
  */
 function _modelreview_access_content($perms) {
   global $user;
+  $modelnid = arg(1);
 
   switch (arg(3)) {
     // Model Owner
     case 'info':
     case 1:
     case 5:
-      $view_args = array(arg(1)); // The display we are using takes an argument
-      $display_id = 'page_6';   // We are accessing the View Model display...
-      $model = views_get_view('model'); // ...from the model View
-      $model->set_arguments($view_args); // Send Views the arguments it needs
-      $model->set_display($display_id);  // and tell it which display we are accessing
-      $model->pre_execute(); // run any preprocessing
-      $model->execute(); // then execute the view
+      $sql = 'SELECT nid, uid FROM {node} WHERE type = 'model' AND node.nid = %d';
+      $result = db_query($sql, $modelnid);
+      $row = db_fetch_object($result);
+      $author = $row->uid;
 
       // Grant access if the user is the root user, if the user has 'edit any model' access, or
       // has 'edit own model' access AND is the model's owner.
-      $access = (($user->uid == 1) || user_access('edit any model') || (user_access('edit own model') && $user->uid == $model->render_field('uid', 0)));
+      $access = (($user->uid == 1) || user_access('edit any model') || (user_access('edit own model') && $user->uid == $author));
       break;
 
     // Editor
@@ -288,13 +295,10 @@ function _modelreview_goto_status() {
 
   // Determine who is viewing the Status page and the current Review Status Code
   // Lookup the Model author
-  $view_args = array($modelnid);
-  $display_id = 'page_6';
-  $model = views_get_view('model');
-  $model->set_arguments($view_args);
-  $model->set_display($display_id);
-  $model->pre_execute();
-  $model->execute();
+  $sql = 'SELECT nid, uid FROM {node} WHERE type = 'model' AND node.nid = %d';
+  $result = db_query($sql, $modelnid);
+  $row = db_fetch_object($result);
+  $author = $row->uid;
 
   // Lookup Review for Assigned Reviewer
   $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer, field_fullname_value as reviewer_name "
@@ -310,14 +314,14 @@ function _modelreview_goto_status() {
   // 1. If user owns model being viewed, use Author mode.
   // 2. If user is assigned as model Reviewer, then use Reviewer mode.
   // 3. If user is an Editor, then use Editor mode.
-  if ($user->uid == $model->render_field('uid', 0)) {
+  if ($user->uid == $author) {
     drupal_goto('model/'. $modelnid .'/review/status/author');
   } elseif (user_access('edit review') && $user->uid == $reviewer) {
     drupal_goto('model/'. $modelnid .'/review/status/reviewer');
   } elseif (($user->uid == 1) || user_access('edit review')) {
     drupal_goto('model/'. $modelnid .'/review/status/editor');
   } else {
-    drupal_set_message('317: You are not authorized to view this model information.');
+    drupal_set_message('You are not authorized to view this model information.');
     drupal_goto('page/invalid-request');
   }
 }
@@ -328,7 +332,7 @@ function _modelreview_goto_status() {
  * This is the Review Request Page, which a model author views prior to requesting
  * a review of their model.
  */
-function _modelreview_request_page() {
+function _modelreview_request_review() {
   $modelnid = arg(1);
 
   // check if modelversion has been reviewed yet.
@@ -338,24 +342,11 @@ function _modelreview_request_page() {
   $sql = "SELECT COUNT(*) FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mr.sid = mra.sid WHERE mr.model_nid = %d AND mra.statusid < 6;";
   $result = db_query($sql, $modelnid);
   $review_count = db_result($result);
-  //drupal_set_message('review count: '. $review_count);
 
   if ($review_count == 0) {
-    $content = '
-<div>
-  <p>You may request that this model be reviewed for completeness and Modeling Best-Practices. Models that meet Model Standards will be certified and will display a Certified badge as well as be included on OpenABM&rsquo;s home page as a Featured Model.</p>
-  <p>In order for a model to be certified as meeting CoMSES Best-Practices Standards, it must:</p>
-  <ol>
-    <li>Have well-formatted and commented programming code. This is to ensure other users can understand and replicate the algorithms in your code.</li>
-    <li>Be fully documented using the ODD standard. By writing documentation that complies with the ODD, other modelers should be able to replicate your model and its results without having to refer to your programming code.</li>
-    <li>Run correctly with the instructions provided with the model. If the model requires special input files or file structures to run, all must be fully explained in the instructions.</li>
-  </ol>
-  <p>When your model is reviewed, it will be examined to verify it meets all these standards. The reviewer will indicate in the review system whether your model meets these standards. Any elements that require revision will be noted in the comments fields, and if necessary, your model will be flagged for you to revise as needed.</p>
-  <p>We urge you to review your model according to these guidelines prior to requesting a review. Once you are confident your model is ready for review, submit your request below.</p>';
-
-
-    $content .= drupal_get_form(modelreview_requestreview_form);
-
+    $content = theme('request_review_page', array( 
+        'model_nid' => $modelnid, 
+      ));
     return $content; 
   } else {
     drupal_goto('model/'. $modelnid .'/review/status');
@@ -374,23 +365,13 @@ function _modelreview_status_page() {
   global $user;
   $modelnid = arg(1);
 
-  // Determine who is viewing the Status page and the current Review Status Code
-  // Lookup the Model author
-  $view_args = array($modelnid);
-  $display_id = 'page_6';
-  $model = views_get_view('model');
-  $model->set_arguments($view_args);
-  $model->set_display($display_id);
-  $model->pre_execute();
-  $model->execute();
-
   // Lookup Review for Assigned Reviewer
   $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer, field_fullname_value as reviewer_name "
         ."FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 2 "
         ."INNER JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
         ."LEFT JOIN node ON reviewer = node.uid AND node.type = 'profile' LEFT JOIN content_type_profile ctp ON node.vid = ctp.vid "
         ."WHERE mr.model_nid = %d";
-  $result = db_query($sql, arg(1));
+  $result = db_query($sql, $modelnid);
   $row = db_fetch_object($result);
   $reviewer = $row->reviewer_name;
 
@@ -400,22 +381,6 @@ function _modelreview_status_page() {
   $sql = 'SELECT mr.rid, mr.sid, mr.model_nid, modelversion_nid, related, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d';
   $result = db_query($sql, $modelnid);
   $row = db_fetch_object($result);
-  $status = $row->statusid;
-
-
-  /* The nature of the screen displayed depends on user role
-     If a Reviewer were to request a review for one of their own models, their Model Owner status
-     should supercede their Reviewer status. Likewise, an Editor's role should supercede being a Reviewer
-     Maybe I should allow the Editor and Reviewer views be displayed simultaneously in that scenario. */
-
-  // Load Review Status info
-  $view_args = array($modelnid);
-  $display_id = 'pane_5';
-  $review = views_get_view('modelreviews');
-  $review->set_arguments($view_args);
-  $review->set_display($display_id);
-  $review->pre_execute();
-  $review->execute();
 
   switch ($usermode) {
     case 'author':
