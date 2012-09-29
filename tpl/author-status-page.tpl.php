@@ -23,7 +23,7 @@
 
 <?php  // Determine who is viewing the Status page and the current Review Status Code
   // Lookup the Model
-  $sql = 'SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = %d';
+  $sql = "SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = %d";
   $result = db_query($sql, $review['model_nid']);
   $row = db_fetch_object($result);
   $author = $row->author;
@@ -125,10 +125,10 @@
       // fetch Editor actions, and report the reviewer reports associated with that editor action
 
       // Lookup Editor Notes (May be multiple posts due to re-reviews)
-      $sql = 'SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, code_clean, code_commented, 
-                     model_documented, model_runs, code_notes, doc_notes, other_notes, editor_notes, recommendation FROM {modelreview} mr
-                     INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 4 
-                     INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d';
+      $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, code_clean, code_commented, "
+            ."model_documented, model_runs, code_notes, doc_notes, other_notes, editor_notes, recommendation FROM {modelreview} mr "
+            ."INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 4 "
+            ."INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
       $editoractions = db_query($sql, $review['model_nid']);
 
       while ($editor_row = db_fetch_object($editoractions)) {
@@ -268,10 +268,10 @@
       // fetch Editor actions, and report the reviewer reports associated with that editor action
 
       // Lookup Editor Notes (May be multiple posts due to re-reviews)
-      $sql = 'SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, code_clean, code_commented, 
-                     model_documented, model_runs, code_notes, doc_notes, other_notes, editor_notes, recommendation FROM {modelreview} mr
-                     INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 4 
-                     INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d';
+      $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, code_clean, code_commented, "
+            ."model_documented, model_runs, code_notes, doc_notes, other_notes, editor_notes, recommendation FROM {modelreview} mr "
+            ."INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 4 "
+            ."INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
       $editoractions = db_query($sql, $review['model_nid']);
 
       while ($editor_row = db_fetch_object($editoractions)) {

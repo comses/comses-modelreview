@@ -246,7 +246,7 @@ function _modelreview_access_content($perms) {
     case 'info':
     case 1:
     case 5:
-      $sql = 'SELECT nid, uid FROM {node} WHERE type = 'model' AND node.nid = %d';
+      $sql = "SELECT nid, uid FROM {node} WHERE type = 'model' AND node.nid = %d";
       $result = db_query($sql, $modelnid);
       $row = db_fetch_object($result);
       $author = $row->uid;
@@ -295,7 +295,7 @@ function _modelreview_goto_status() {
 
   // Determine who is viewing the Status page and the current Review Status Code
   // Lookup the Model author
-  $sql = 'SELECT nid, uid FROM {node} WHERE type = 'model' AND node.nid = %d';
+  $sql = "SELECT nid, uid FROM {node} WHERE type = 'model' AND node.nid = %d";
   $result = db_query($sql, $modelnid);
   $row = db_fetch_object($result);
   $author = $row->uid;
@@ -378,7 +378,7 @@ function _modelreview_status_page() {
   $usermode = arg(4); // view status page in this mode (Author, Editor, or Reviewer)
 
   // lookup the current status of the open 'modelreview' record
-  $sql = 'SELECT mr.rid, mr.sid, mr.model_nid, modelversion_nid, related, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d';
+  $sql = "SELECT mr.rid, mr.sid, mr.model_nid, modelversion_nid, related, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
   $result = db_query($sql, $modelnid);
   $row = db_fetch_object($result);
 

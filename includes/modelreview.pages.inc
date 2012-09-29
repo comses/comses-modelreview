@@ -75,7 +75,7 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
     // notify all Editors
     
     // lookup model node
-    $sql = 'SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = %d';
+    $sql = "SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = %d";
     $result = db_query($sql, $modelnid);
     $row = db_fetch_object($result);
     $title = $row->title;
@@ -133,7 +133,7 @@ function modelreview_assignreviewer_form_submit($form, &$form_state) {
   $modelnid = $form_state['values']['model_nid'];
 
   // lookup the rid for the open 'modelreview' record
-  $sql = 'SELECT mr.rid, mr.sid, mr.model_nid, modelversion_nid, related, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d';
+  $sql = "SELECT mr.rid, mr.sid, mr.model_nid, modelversion_nid, related, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
   $result = db_query($sql, $modelnid);
   $row = db_fetch_object($result);
   $review_id = $row->rid;
@@ -170,7 +170,7 @@ function modelreview_assignreviewer_form_submit($form, &$form_state) {
 
   // notify the Assigned Reviewer
   // lookup model node
-  $sql = 'SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = %d';
+  $sql = "SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = %d";
   $result = db_query($sql, $modelnid);
   $row = db_fetch_object($result);
   $title = $row->title;
@@ -199,7 +199,7 @@ function modelreview_review_form() {
     2 => t('Certify (Accept)'),
   );
 
-  $sql = 'SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 2 INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d';
+  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 2 INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
   $result = db_query($sql, arg(1));
   $row = db_fetch_object($result);
 
@@ -319,7 +319,7 @@ function modelreview_review_form_submit($form, &$form_state) {
 
   // notify all Editors
   // lookup model node
-  $sql = 'SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = %d';
+  $sql = "SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = %d";
   $result = db_query($sql, $modelnid);
   $row = db_fetch_object($result);
   $title = $row->title;
@@ -379,7 +379,7 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
   $modelnid = $form_state['values']['model_nid'];
 
   // lookup the rid for the 'modelreview' record
-  $sql = 'SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 2 INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d';
+  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 2 INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
   $result = db_query($sql, arg(1));
   $row = db_fetch_object($result);
   $review_id = $row->rid;
@@ -395,9 +395,9 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
 
   // we need to lookup the review actions that have been submitted for the editor to review
   // they will be actions that have not been associated ('related') to any editor actions
-  $sql = 'SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, 
-                FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 3
-                INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d AND related = NULL';
+  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate "
+        ."FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 3 "
+        ."INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d AND related = NULL";
   $reviews = db_query($sql, $review['model_nid']);
   // after we add our editor action, we will need to update these review actions to point (via 'related') to our new editor action
 
@@ -440,12 +440,12 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
 
   // and update any related review actions with the sid of the new editor action we just created
   $sql = "UPDATE {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 3 "
-         ."SET related = %d WHERE mr.model_nid = %d AND mra.related IS NULL";
+        ."SET related = %d WHERE mr.model_nid = %d AND mra.related IS NULL";
   db_query($sql, $action_sid, $modelnid);
 
   // Lookup the Model author
   // lookup model node
-  $sql = 'SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = %d';
+  $sql = "SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = %d";
   $result = db_query($sql, $modelnid);
   $row = db_fetch_object($result);
   $title = $row->title;
@@ -496,7 +496,7 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
   $modelnid = $form_state['values']['model_nid'];
 
   // lookup the rid for the open 'modelreview' record
-  $sql = 'SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 2 INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d';
+  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 2 INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
   $result = db_query($sql, $modelnid);
   $row = db_fetch_object($result);
   $review_id = $row->rid;
