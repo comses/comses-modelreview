@@ -85,11 +85,7 @@
       // Status 2 (Assigned): Show model status
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
-      print '      <div class="modelreview-textvalue">Your model has been assigned to a CoMSES Reviewer. THe model review should begin shortly. Once the review has been completed, an Editor will examine the reviewers notes and determine whether any revisions need to be made to your model, or if it can be certified.</div>';
-      print '    </div>';
-      print '    <div class="modelreview-field">';
-      print '      <div class="modelreview-label">Assigned Reviewer:</div>';
-      print '      <div class="modelreview-value">'. $review['reviewer'] .'</div>';
+      print '      <div class="modelreview-textvalue">Your model has been assigned to a CoMSES Reviewer. The model review should begin shortly. Once the review has been completed, an Editor will examine the reviewer\'s notes and determine whether any revisions need to be made to your model, or if it can be certified.</div>';
       print '    </div>';
       print '  </div>';
       break;
@@ -98,11 +94,7 @@
       // Status 3 (Review Completed): Show model status
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
-      print '      <div class="modelreview-textvalue">The model review has been completed. Soon, an Editor will examine the reviewers notes and determine whether any revisions need to be made to your model, or if it can be certified. You will be notified when the Editor has processed your case.</div>';
-      print '    </div>';
-      print '    <div class="modelreview-field">';
-      print '      <div class="modelreview-label">Assigned Reviewer:</div>';
-      print '      <div class="modelreview-value">'. $review['reviewer'] .'</div>';
+      print '      <div class="modelreview-textvalue">The model review has been completed. Soon, an Editor will examine the reviewer\'s notes and determine whether any revisions need to be made to your model, or if it can be certified. You will be notified when the Editor has processed your case.</div>';
       print '    </div>';
       print '  </div>';
 
@@ -116,36 +108,30 @@
       print '      <div class="modelreview-label">Info on Current Status:</div>';
       print '      <div>A CoMSES Editor has reviewed your case and, based on reviewer recommendations, has determined that your model requires the follwoing revisions before it can be certified.  Please review the provided notes, and make the requested changes to your model and/or documentation. When you feel you have completed the needed revisions and are ready for a re-review, click the "Request Re-Review" at the bottom of this page.</div>';
       print '    </div>';
-      print '    <div class="modelreview-field">';
-      print '      <div class="modelreview-label">Assigned Reviewer:</div>';
-      print '      <div class="modelreview-value">'. $review['reviewer'] .'</div>';
-      print '    </div>';
       print '  </div>';
 
       // fetch Editor actions, and report the reviewer reports associated with that editor action
 
       // Lookup Editor Notes (May be multiple posts due to re-reviews)
-      $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, code_clean, code_commented, "
-            ."model_documented, model_runs, code_notes, doc_notes, other_notes, editor_notes, recommendation FROM {modelreview} mr "
-            ."INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 4 "
+      $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, editor_notes, recommendation "
+            ."FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 4 "
             ."INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
       $editoractions = db_query($sql, $review['model_nid']);
 
       while ($editor_row = db_fetch_object($editoractions)) {
-
         // Lookup Reviewer Notes (May be multiple posts due to re-reviews, or multiple reviewers)
         $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, "
               ."mc1.compliance AS 'code_clean', mc2.compliance AS 'code_commented', mc3.compliance AS 'model_documented', "
               ."mc4.compliance AS 'model_runs', code_notes, doc_notes, other_notes, editor_notes, mrec.recommendation "
               ."FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 3 "
-              ."INNER JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
-              ."INNER JOIN modelreview_compliance mc1 ON mra.code_clean = mc1.cid "
-              ."INNER JOIN modelreview_compliance mc2 ON mra.code_clean = mc2.cid "
-              ."INNER JOIN modelreview_compliance mc3 ON mra.code_clean = mc3.cid "
-              ."INNER JOIN modelreview_compliance mc4 ON mra.code_clean = mc4.cid "
-              ."INNER JOIN modelreview_recommend mrec ON mra.code_clean = mrec.id "
+              ."LEFT JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
+              ."LEFT JOIN modelreview_compliance mc1 ON mra.code_clean = mc1.cid "
+              ."LEFT JOIN modelreview_compliance mc2 ON mra.code_commented = mc2.cid "
+              ."LEFT JOIN modelreview_compliance mc3 ON mra.model_documented = mc3.cid "
+              ."LEFT JOIN modelreview_compliance mc4 ON mra.model_runs = mc4.cid "
+              ."LEFT JOIN modelreview_recommend mrec ON mra.recommendation = mrec.id "
               ."WHERE mr.model_nid = %d AND mra.related = %d";
-        $reviews = db_query($sql, $review['model_nid'], $editor_row->related);
+        $reviews = db_query($sql, $review['model_nid'], $editor_row->sid);
 
         while ($review_row = db_fetch_object($reviews)) {
           print '  <div class="modelreview-reviewinfo modelreview-section">';
@@ -191,14 +177,12 @@
           print '    </div>';
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Other Review Notes</div>';
-          print '      <div class="modelreview-field">';
-          print '        <div class="modelreview-label">Other Notes:</div>';
-          print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
-          print '      </div>';
-          print '      <div class="modelreview-field">';
-          print '        <div class="modelreview-label">Notes to the Editor:</div>';
-          print '        <div class="modelreview-textvalue">'. $review_row->editor_notes .'</div>';
-          print '      </div>';
+          if (!empty($review_row->other_notes)) {
+            print '      <div class="modelreview-field">';
+            print '        <div class="modelreview-label">Other Notes:</div>';
+            print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
+            print '      </div>';
+          }
           print '      <div class="modelreview-field">';
           print '        <div class="modelreview-label">Reviewer Recommendation:</div>';
           print '        <div class="modelreview-value">'. $review_row->recommendation .'</div>';
@@ -207,21 +191,14 @@
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Editor\'s Instructions</div>';
           print '      <div class="modelreview-field">';
-          print '        <div class="modelreview-label">Instructions from the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $editor_row->editor_notes .'</div>';
           print '      </div>';
           print '    </div>';
           print '  </div>';
         }
       }
-      print '    <div class="modelreview-instructions status-section">';
-      print '      <div class="">Instructions from the Editor:</div>';
-      print '      <div class="modelreview-value">'. $editoractions->other_notes .'</div>';
-      print '    </div>';
 
-      print '  <div><a href="/model/'. $review['model_nid'] .'/review/5/step">Click to Request a Re-Review</a></div>';
-      
-      print drupal_get_form();
+      print '    <div class="modelreview-instructions status-section">'. drupal_get_form(modelreview_requestrereview_form) .'</div>';
 
       break;
 
@@ -230,10 +207,6 @@
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
       print '      <div>Your model has returned to your Reviewer in order for it to be re-reviewed. The model re-review should begin shortly. Once it has been completed, an Editor will examine the reviewers notes and determine whether your model may be certified.</div>';
-      print '    </div>';
-      print '    <div class="modelreview-field">';
-      print '      <div class="modelreview-label">Assigned Reviewer:</div>';
-      print '      <div class="modelreview-value">'. $review['reviewer'] .'</div>';
       print '    </div>';
       print '  </div>';
 
@@ -245,10 +218,6 @@
       print '      <div class="modelreview-label">Info on Current Status:</div>';
       print '      <div>Congratulations, your model has been determined to meet all appropriate standard for completeness and documentation. It has been Certified by CoMSES Net and is noted as such on the main Viewing page.</div>';
       print '    </div>';
-      print '    <div class="modelreview-field">';
-      print '      <div class="modelreview-label">Assigned Reviewer:</div>';
-      print '      <div class="modelreview-value">'. $review['reviewer'] .'</div>';
-      print '    </div>';
       print '  </div>';
 
       break;
@@ -258,10 +227,6 @@
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
       print '      <div>Unfortunately, your model can not be Certified at this time. Please note the reasons indicated below. If you have any questions or concerns baout this determination, please contact: ...</div>';
-      print '    </div>';
-      print '    <div class="modelreview-field">';
-      print '      <div class="modelreview-label">Assigned Reviewer:</div>';
-      print '      <div class="modelreview-value">'. $review['reviewer'] .'</div>';
       print '    </div>';
       print '  </div>';
 
@@ -334,10 +299,12 @@
           print '    </div>';
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Other Review Notes</div>';
-          print '      <div class="modelreview-field">';
-          print '        <div class="modelreview-label">Other Notes:</div>';
-          print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
-          print '      </div>';
+          if (!empty($review_row->other_notes)) {
+            print '      <div class="modelreview-field">';
+            print '        <div class="modelreview-label">Other Notes:</div>';
+            print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
+            print '      </div>';
+          }
           print '      <div class="modelreview-field">';
           print '        <div class="modelreview-label">Notes to the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $review_row->editor_notes .'</div>';
@@ -354,13 +321,15 @@
           print '        <div class="modelreview-textvalue">'. $editor_row->editor_notes .'</div>';
           print '      </div>';
           print '    </div>';
+          print '    <div class="modelreview-instructions modelreview-block">';
+          print '      <div class="modelreview-block-head">Editor\'s Instructions</div>';
+          print '      <div class="modelreview-field">';
+          print '        <div class="modelreview-textvalue">'. $editor_row->editor_notes .'</div>';
+          print '      </div>';
+          print '    </div>';
           print '  </div>';
         }
       }
-      print '    <div class="modelreview-instructions status-section">';
-      print '      <div class="">Instructions from the Editor:</div>';
-      print '      <div class="modelreview-value">'. $editoractions->other_notes .'</div>';
-      print '    </div>';
       break;
 
     default:

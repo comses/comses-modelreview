@@ -198,7 +198,6 @@
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Editor\'s Instructions</div>';
           print '      <div class="modelreview-field">';
-          print '        <div class="modelreview-label">Instructions from the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $editor_row->editor_notes .'</div>';
           print '      </div>';
           print '    </div>';
@@ -369,10 +368,12 @@
           print '    </div>';
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Other Review Notes</div>';
-          print '      <div class="modelreview-field">';
-          print '        <div class="modelreview-label">Other Notes:</div>';
-          print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
-          print '      </div>';
+          if (!empty($review_row->other_notes)) {
+            print '      <div class="modelreview-field">';
+            print '        <div class="modelreview-label">Other Notes:</div>';
+            print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
+            print '      </div>';
+          }
           print '      <div class="modelreview-field">';
           print '        <div class="modelreview-label">Notes to the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $review_row->editor_notes .'</div>';
@@ -385,7 +386,6 @@
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Editor\'s Instructions</div>';
           print '      <div class="modelreview-field">';
-          print '        <div class="modelreview-label">Instructions from the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $editor_row->editor_notes .'</div>';
           print '      </div>';
           print '    </div>';
@@ -474,10 +474,12 @@
           print '    </div>';
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Other Review Notes</div>';
-          print '      <div class="modelreview-field">';
-          print '        <div class="modelreview-label">Other Notes:</div>';
-          print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
-          print '      </div>';
+          if (!empty($review_row->other_notes)) {
+            print '      <div class="modelreview-field">';
+            print '        <div class="modelreview-label">Other Notes:</div>';
+            print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
+            print '      </div>';
+          }
           print '      <div class="modelreview-field">';
           print '        <div class="modelreview-label">Notes to the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $review_row->editor_notes .'</div>';
@@ -490,7 +492,6 @@
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Editor\'s Instructions</div>';
           print '      <div class="modelreview-field">';
-          print '        <div class="modelreview-label">Instructions from the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $editor_row->editor_notes .'</div>';
           print '      </div>';
           print '    </div>';
@@ -579,10 +580,12 @@
           print '    </div>';
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Other Review Notes</div>';
-          print '      <div class="modelreview-field">';
-          print '        <div class="modelreview-label">Other Notes:</div>';
-          print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
-          print '      </div>';
+          if (!empty($review_row->other_notes)) {
+            print '      <div class="modelreview-field">';
+            print '        <div class="modelreview-label">Other Notes:</div>';
+            print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
+            print '      </div>';
+          }
           print '      <div class="modelreview-field">';
           print '        <div class="modelreview-label">Notes to the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $review_row->editor_notes .'</div>';
@@ -595,7 +598,6 @@
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Editor\'s Instructions</div>';
           print '      <div class="modelreview-field">';
-          print '        <div class="modelreview-label">Instructions from the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $editor_row->editor_notes .'</div>';
           print '      </div>';
           print '    </div>';
@@ -684,10 +686,12 @@
           print '    </div>';
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Other Review Notes</div>';
-          print '      <div class="modelreview-field">';
-          print '        <div class="modelreview-label">Other Notes:</div>';
-          print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
-          print '      </div>';
+          if (!empty($review_row->other_notes)) {
+            print '      <div class="modelreview-field">';
+            print '        <div class="modelreview-label">Other Notes:</div>';
+            print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
+            print '      </div>';
+          }
           print '      <div class="modelreview-field">';
           print '        <div class="modelreview-label">Notes to the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $review_row->editor_notes .'</div>';
@@ -700,7 +704,6 @@
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Editor\'s Instructions</div>';
           print '      <div class="modelreview-field">';
-          print '        <div class="modelreview-label">Instructions from the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $editor_row->editor_notes .'</div>';
           print '      </div>';
           print '    </div>';

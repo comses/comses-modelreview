@@ -283,6 +283,12 @@ function _modelreview_debug_request() {
   drupal_goto('model/'. $modelnid .'/review/status/author');
 }
 
+function _modelreview_request_page() {
+  return theme('request_review_page', array( 
+        'model_nid' => $modelnid, 
+      ));
+}
+
 /**
  * Implementation of page callback
  *

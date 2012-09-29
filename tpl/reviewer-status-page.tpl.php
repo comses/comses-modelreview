@@ -201,10 +201,12 @@
           print '    </div>';
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Other Review Notes</div>';
-          print '      <div class="modelreview-field">';
-          print '        <div class="modelreview-label">Other Notes:</div>';
-          print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
-          print '      </div>';
+          if (!empty($review_row->other_notes)) {
+            print '      <div class="modelreview-field">';
+            print '        <div class="modelreview-label">Other Notes:</div>';
+            print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
+            print '      </div>';
+          }
           print '      <div class="modelreview-field">';
           print '        <div class="modelreview-label">Notes to the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $review_row->editor_notes .'</div>';
@@ -262,7 +264,7 @@
 
     default:
       // No review requested: invalid page
-      drupal_set_message('261r: You are not authorized to view this information.');
+      drupal_set_message('You are not authorized to view this information.');
       drupal_goto('page/invalid-request'); 
       break;
   }
