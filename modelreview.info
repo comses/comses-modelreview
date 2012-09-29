@@ -6,3 +6,4 @@ package = OpenABM
 version = 6.x-0.8beta
 core = 6.x
 php = 5.2
+dependencies[] = notifications_lite
