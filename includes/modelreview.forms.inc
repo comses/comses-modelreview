@@ -1,6 +1,103 @@
 <?php
 
 /**
+ * Status Action 1: Request Review
+ */
+function modelreview_requestreview_form() {
+  $form['model_nid'] = array(
+    '#type' => 'hidden',
+    '#value' => arg(1),
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Request Review'),
+  );
+
+  return $form;
+}
+
+function modelreview_requestreview_form_submit($form, &$form_state) {
+  $modelnid = $form_state['values']['model_nid'];
+
+  // Verify model does not have an open Review case.
+  // "Only one per customer, please." (per model, at one time)
+  // Otherwise redirect to Status page with error about an open case already present.
+  $sql = "SELECT COUNT(*) FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mr.sid = mra.sid WHERE mr.model_nid = %d AND mra.statusid < 6;";
+  $result = db_query($sql, $modelnid);
+  $review_count = db_result($result);
+
+  if ($review_count > 0) {
+    // An open review case already exists
+    drupal_set_message("Error: This model already has already been reviewed.");
+    $dest = 'model/'. $modelnid .'/review/status';
+  } else {
+    // Insert new 'modelreview' record
+    $review_record = array(
+      'rid' => NULL,
+      'sid' => 0,
+      'model_nid' => $modelnid,
+    );
+    drupal_write_record('modelreview', $review_record);
+
+    // now lookup the rid for the new 'modelreview' record
+    $sql = "SELECT mr.rid FROM modelreview mr WHERE mr.model_nid = %d ORDER BY mr.rid DESC LIMIT 1;";
+    $result = db_query($sql, $modelnid);
+    $review_id = db_result($result);
+
+    // get the node id for the latest modelversion, using Views
+    $view_args = array($modelnid); // The display we are using takes an argument
+    $display_id = 'page_1';   // We are accessing the Latest Version display...
+    $view = views_get_view('modelversion'); // ...from the modelversion View
+    $view->set_arguments($view_args); // Send Views the arguments it needs
+    $view->set_display($display_id);  // and tell it which display we are accessing
+    $view->pre_execute(); // run any preprocessing
+    $view->execute(); // then execute the view
+
+    $modelversion_nid = $view->render_field('nid', 0);
+
+    // Insert new 'modelreview_action' record
+    $action_record = array(
+      'rid' => $review_id,
+      'modelversion_nid' => $modelversion_nid,
+      'statusid' => 1,
+      'statusdate' => time(),
+    );
+    drupal_write_record('modelreview_action', $action_record);
+
+    // now update 'modelreview' record with action sid
+    $sql = "SELECT mra.sid FROM {modelreview_action} mra WHERE mra.rid = %d ORDER BY mra.statusdate DESC LIMIT 1;";
+    $result = db_query($sql, $review_id);
+    $review_sid = db_result($result);
+
+    $review_record = array(
+      'rid' => $review_id,
+      'sid' => $review_sid,
+    );
+    drupal_write_record('modelreview', $review_record, 'rid');
+
+    // notify all Editors
+    $view_args = array($modelnid);
+    $display_id = 'page_6';
+    $model = views_get_view('model');
+    $model->set_arguments($view_args);
+    $model->set_display($display_id);
+    $model->pre_execute();
+    $model->execute();
+
+    $subject = "Model Review has been requested";
+    $body = 'The author of the model, "'. $model->render_field('title', 0) .'", has requested a Model Review. A Reviewer needs to be assigned to this case, in order for it to proceed. You may access this case by visiting: '. l("http://dev.comses.asu.edu/model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
+
+    $sql = "SELECT u.uid, u.name FROM users u INNER JOIN users_roles ur ON u.uid = ur.uid "
+          ."INNER JOIN permission p ON ur.rid = p.rid WHERE p.perm like '%%%s%%'";
+    $results = db_query($sql, 'edit review');
+    while ($row = db_fetch_object($results)) {
+      notifications_lite_send($row->uid, $subject, $body);
+    }
+
+    drupal_goto('model/'. $modelnid .'/review/status');
+}
+
+/**
  * Status Action 2: Assign Reviewer
  */
 function modelreview_assignreviewer_form() {
@@ -394,5 +491,69 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
   //notifications_lite_send($model->render_field('uid', 0), $subject, $body);
 
   drupal_goto('model/'. $modelnid .'/review/status'); 
+
+}
+
+
+/**
+ * Status Action 5: Request Re-Review
+ */
+function modelreview_requestrereview_form() {
+  $form['model_nid'] = array(
+    '#type' => 'hidden',
+    '#value' => arg(1),
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Request Re-Review'),
+  );
+
+  return $form;
+}
+
+function modelreview_requestreview_form_submit($form, &$form_state) {
+  $modelnid = $form_state['values']['model_nid'];
+
+  // lookup the rid for the open 'modelreview' record
+  $sql = 'SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 2 INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d';
+  $result = db_query($sql, $modelnid);
+  $row = db_fetch_object($result);
+  $review_id = $row->rid;
+  $reviewer = $row->reviewer;
+
+  // get the node id for the latest modelversion, using Views
+  $view_args = array($modelnid); // The display we are using takes an argument
+  $display_id = 'page_1';   // We are accessing the Latest Version display...
+  $view = views_get_view('modelversion'); // ...from the modelversion View
+  $view->set_arguments($view_args); // Send Views the arguments it needs
+  $view->set_display($display_id);  // and tell it which display we are accessing
+  $view->pre_execute(); // run any preprocessing
+  $view->execute(); // then execute the view
+
+  $modelversion_nid = $view->render_field('nid', 0);
+
+  // Insert new 'modelreview_action' record
+  $action_record = array(
+    'rid' => $review_id,
+    'modelversion_nid' => $modelversion_nid,
+    'reviewer' => $reviewer,
+    'statusid' => 5,
+    'statusdate' => time(),
+  );
+  drupal_write_record('modelreview_action', $action_record);
+
+  // now update 'modelreview' record with action sid
+  $sql = "SELECT mra.sid FROM {modelreview_action} mra WHERE mra.rid = %d ORDER BY mra.statusdate DESC LIMIT 1;";
+  $result = db_query($sql, $review_id);
+  $review_sid = db_result($result);
+
+  $review_record = array(
+    'rid' => $review_id,
+    'sid' => $review_sid,
+  );
+  drupal_write_record('modelreview', $review_record, 'rid');
+
+  // transfer user to Review form
+  drupal_goto('model/'. $modelnid .'/review/status');
 
 }

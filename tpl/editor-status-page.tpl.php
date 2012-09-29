@@ -714,7 +714,7 @@
 
     default:
       // No review requested: invalid page
-      drupal_set_message('473e: You are not authorized to view this information.');
+      drupal_set_message('You are not authorized to view this information.');
       drupal_goto('page/invalid-request'); 
       break;
   }

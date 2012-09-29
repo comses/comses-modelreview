@@ -222,6 +222,9 @@
       print '    </div>';
 
       print '  <div><a href="/model/'. $review['model_nid'] .'/review/5/step">Click to Request a Re-Review</a></div>';
+      
+      print drupal_get_form();
+
       break;
 
     case 5: // Re-Review Requested
