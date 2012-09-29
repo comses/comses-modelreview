@@ -302,9 +302,9 @@ function _modelreview_goto_status() {
 
   // Lookup Review for Assigned Reviewer
   $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer, field_fullname_value as reviewer_name "
-        ."FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 2 "
-        ."INNER JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
-        ."LEFT JOIN node ON reviewer = node.uid AND node.type = 'profile' LEFT JOIN content_type_profile ctp ON node.vid = ctp.vid "
+        ."FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 2 "
+        ."INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid "
+        ."LEFT JOIN {node} ON reviewer = node.uid AND node.type = 'profile' LEFT JOIN {content_type_profile} ctp ON node.vid = ctp.vid "
         ."WHERE mr.model_nid = %d";
   $result = db_query($sql, arg(1));
   $row = db_fetch_object($result);
@@ -339,7 +339,7 @@ function _modelreview_request_review() {
   // if not, then provide info on the process.
   // if so, then redirect to the review status page
 
-  $sql = "SELECT COUNT(*) FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mr.sid = mra.sid WHERE mr.model_nid = %d AND mra.statusid < 6;";
+  $sql = "SELECT COUNT(*) FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid WHERE mr.model_nid = %d AND mra.statusid < 6;";
   $result = db_query($sql, $modelnid);
   $review_count = db_result($result);
 
@@ -366,10 +366,12 @@ function _modelreview_status_page() {
   $modelnid = arg(1);
 
   // Lookup Review for Assigned Reviewer
-  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer, field_fullname_value as reviewer_name "
-        ."FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 2 "
-        ."INNER JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
-        ."LEFT JOIN node ON reviewer = node.uid AND node.type = 'profile' LEFT JOIN content_type_profile ctp ON node.vid = ctp.vid "
+  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, mra.statusdate, mra.reviewer, "
+        ."field_fullname_value as reviewer_name FROM {modelreview} mr "
+        ."INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 2 "
+        ."INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid "
+        ."LEFT JOIN {node} ON mra.reviewer = node.uid AND node.type = 'profile' "
+        ."LEFT JOIN {content_type_profile} ctp ON node.vid = ctp.vid "
         ."WHERE mr.model_nid = %d";
   $result = db_query($sql, $modelnid);
   $row = db_fetch_object($result);

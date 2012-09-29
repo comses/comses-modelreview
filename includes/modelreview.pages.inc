@@ -29,7 +29,7 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
   if ($review_count > 0) {
     // An open review case already exists
     drupal_set_message("Error: This model already has already been reviewed.");
-    $dest = 'model/'. $modelnid .'/review/status';
+    drupal_goto('model/'. $modelnid .'/review/status');
   } else {
     // Insert new 'modelreview' record
     $review_record = array(
@@ -91,6 +91,7 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
     }
 
     drupal_goto('model/'. $modelnid .'/review/status');
+  }
 }
 
 /**
@@ -492,7 +493,7 @@ function modelreview_requestrereview_form() {
   return $form;
 }
 
-function modelreview_requestreview_form_submit($form, &$form_state) {
+function modelreview_requestrereview_form_submit($form, &$form_state) {
   $modelnid = $form_state['values']['model_nid'];
 
   // lookup the rid for the open 'modelreview' record
