@@ -133,33 +133,22 @@ function modelreview_theme() {
  */
 function modelreview_menu() {
 
-  // This is the Edit model tab which redirects to the official edit address.
-/*  $items['model/%/version/%/review'] = array(
-    'title' => 'Debug: Review Status',
-    'description' => "",
-    'page callback' => '_modelreview_goto_status',
-    'page arguments' => array(array(1)),
-    'access callback' => TRUE,
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 10,
-  ); */
+#  $items['model/%/version/%/request'] = array(
+#    'title' => 'Debug: Request Review',
+#    'description' => "",
+#    'page callback' => '_modelreview_debug_request',
+#    'page arguments' => array(array(1)),
+#    'access callback' => TRUE,
+#    'type' => MENU_LOCAL_TASK,
+#    'weight' => 11,
+#  );
 
-  $items['model/%/version/%/request'] = array(
-    'title' => 'Debug: Request Review',
-    'description' => "",
-    'page callback' => '_modelreview_debug_request',
-    'page arguments' => array(array(1)),
-    'access callback' => TRUE,
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 11,
-  );
-
-  // Review Test Message page
-  $items['model/%/review/test'] = array(
-    'page callback' => 'modelreview_test_message',
-    'access callback' => TRUE,
-    'type' => MENU_CALLBACK,
-  );
+#  // Review Test Message page
+#  $items['model/%/review/test'] = array(
+#    'page callback' => 'modelreview_test_message',
+#    'access callback' => TRUE,
+#    'type' => MENU_CALLBACK,
+#  );
 
   // Review Status page
   $items['model/%/review/status'] = array(
@@ -167,7 +156,8 @@ function modelreview_menu() {
     'description' => "",
     'page callback' => '_modelreview_goto_status',
     'page arguments' => array(array(1)),
-    'access callback' => TRUE,
+    'access callback' => '_modelreview_access_content',
+    'access arguments' => array(array('edit review', 'review model', 'edit any model', 'edit own model')),
     'type' => MENU_CALLBACK,
   );
 
@@ -176,7 +166,8 @@ function modelreview_menu() {
     'description' => "",
     'page callback' => '_modelreview_status_page',
     'page arguments' => array(array(1, 4)),
-    'access callback' => TRUE,
+    'access callback' => '_modelreview_access_content',
+    'access arguments' => array(array('edit any model', 'edit own model')),
     'type' => MENU_LOCAL_TASK,
     'weight' => 1,
   );
@@ -186,7 +177,8 @@ function modelreview_menu() {
     'description' => "",
     'page callback' => '_modelreview_status_page',
     'page arguments' => array(array(1, 4)),
-    'access callback' => TRUE,
+    'access callback' => '_modelreview_access_content',
+    'access arguments' => array(array('edit review')),
     'type' => MENU_LOCAL_TASK,
     'weight' => 2,
   );
@@ -196,18 +188,19 @@ function modelreview_menu() {
     'description' => "",
     'page callback' => '_modelreview_status_page',
     'page arguments' => array(array(1, 4)),
-    'access callback' => TRUE,
+    'access callback' => '_modelreview_access_content',
+    'access arguments' => array(array('review model')),
     'type' => MENU_LOCAL_TASK,
     'weight' => 3,
   ); 
-
 
   // Info on model reviews and request page
   $items['model/%/review/info'] = array(
     'title' => 'Request A Model Review',
     'description' => "",
     'page callback' => '_modelreview_request_page',
-    'access callback' => TRUE,
+    'access callback' => '_modelreview_access_content',
+    'access arguments' => array(array('edit any model', 'edit own model')),
     'type' => MENU_CALLBACK,
   );
   
@@ -216,7 +209,8 @@ function modelreview_menu() {
     'description' => "",
     'page callback' => '_modelreview_queues_page',
     //'page arguments' => array(array(1, 4)),
-    'access callback' => TRUE,
+    'access callback' => '_modelreview_access_content',
+    'access arguments' => array(array('edit review', 'review model')),
     'type' => MENU_LOCAL_TASK,
     'weight' => 10,
   );
@@ -238,43 +232,31 @@ function modelreview_perm() {
  * Implementation of custom access callback function
  */
 function _modelreview_access_content($perms) {
-  global $user;
-  $modelnid = arg(1);
 
-  switch (arg(3)) {
-    // Model Owner
-    case 'info':
-    case 1:
-    case 5:
-      $sql = "SELECT nid, uid FROM {node} WHERE type = 'model' AND node.nid = %d";
-      $result = db_query($sql, $modelnid);
-      $row = db_fetch_object($result);
-      $author = $row->uid;
+  // if author access requested
+  if (in_array('edit any model', $perms) || in_array('edit own model', $perms)) {
+    global $user;
+    $modelnid = arg(1);
 
-      // Grant access if the user is the root user, if the user has 'edit any model' access, or
-      // has 'edit own model' access AND is the model's owner.
-      $access = (($user->uid == 1) || user_access('edit any model') || (user_access('edit own model') && $user->uid == $author));
-      break;
+    $sql = "SELECT nid, uid FROM {node} WHERE type = 'model' AND node.nid = %d";
+    $result = db_query($sql, $modelnid);
+    $row = db_fetch_object($result);
 
-    // Editor
-    case 'assign':
-    case 2:
-    case 4:
-    case 6:
-    case 7:
-      // is user a Review Editor?
-      $access = (($user->uid == 1) || user_access('edit review'));
-      break;
-
-    // Reviewer
-    case 'update':
-    case 3:
-      // is user a Reviewer?
-      $access = (($user->uid == 1) || user_access('review model'));
-      break;
+    $author = $row->uid;
+    $author_access = (($user->uid == 1) || user_access('edit any model') || (user_access('edit own model') && $user->uid == $author));
   }
 
-  return $access;
+  // if editor access requested
+  if (in_array('edit review', $perms)) {
+    $editor_access = (($user->uid == 1) || user_access('edit review'));
+  }
+
+  // if reviewer access requested
+  if (in_array('review model', $perms)) {
+    $reviewer_access = (($user->uid == 1) || user_access('review model'));
+  }
+
+  return ($author_access || $editor_access || $reviewer_access);
 }
 
 function _modelreview_debug_request() {

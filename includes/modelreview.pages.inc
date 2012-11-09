@@ -470,7 +470,7 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
       break;
   }
 
-  //notifications_lite_send($author, $subject, $body);
+  notifications_lite_send($author, $subject, $body);
 
   drupal_goto('model/'. $modelnid .'/review/status'); 
 

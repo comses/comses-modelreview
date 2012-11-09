@@ -3,7 +3,7 @@
 name = "CoMSES Model Reviews"
 description = "Model Review system for the CoMSES Model Library"
 package = OpenABM
-version = 6.x-0.8beta
+version = 6.x-1.0-RC1
 core = 6.x
 php = 5.2
 dependencies[] = notifications_lite
