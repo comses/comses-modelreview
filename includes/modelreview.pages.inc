@@ -17,6 +17,8 @@ function modelreview_requestreview_form() {
 }
 
 function modelreview_requestreview_form_submit($form, &$form_state) {
+  global $base_url;
+  global $base_path;
   $modelnid = $form_state['values']['model_nid'];
 
   // Verify model does not have an open Review case.
@@ -73,7 +75,6 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
     drupal_write_record('modelreview', $review_record, 'rid');
 
     // notify all Editors
-    
     // lookup model node
     $sql = "SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = %d";
     $result = db_query($sql, $modelnid);
@@ -81,7 +82,7 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
     $title = $row->title;
 
     $subject = "Model Review has been requested";
-    $body = 'The author of the model, "'. $title .'", has requested a Model Review. A Reviewer needs to be assigned to this case, in order for it to proceed. You may access this case by visiting: '. l("http://dev.comses.asu.edu/model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
+    $body = 'The author of the model, "'. $title .'", has requested a Model Review. A Reviewer needs to be assigned to this case, in order for it to proceed. You may access this case by visiting: '. l($base_url . $base_path ."model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
 
     $sql = "SELECT u.uid, u.name FROM users u INNER JOIN users_roles ur ON u.uid = ur.uid "
           ."INNER JOIN permission p ON ur.rid = p.rid WHERE p.perm like '%%%s%%'";
@@ -130,6 +131,8 @@ function modelreview_assignreviewer_form() {
 }
 
 function modelreview_assignreviewer_form_submit($form, &$form_state) {
+  global $base_url;
+  global $base_path;
   global $user;
   $modelnid = $form_state['values']['model_nid'];
 
@@ -177,7 +180,7 @@ function modelreview_assignreviewer_form_submit($form, &$form_state) {
   $title = $row->title;
 
   $subject = "You have been assigned a new Model Review case";
-  $body = 'You have been assigned a new Model Review case for the model, "'. $title .'". You may access this review case by visiting: '. l("http://dev.comses.asu.edu/model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
+  $body = 'You have been assigned a new Model Review case for the model, "'. $title .'". You may access this review case by visiting: '. l($base_url . $base_path ."model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
   notifications_lite_send($form_state['values']['reviewer'], $subject, $body);
 
   drupal_goto('model/'. $modelnid .'/review/status'); 
@@ -277,6 +280,8 @@ function modelreview_review_form() {
 }
 
 function modelreview_review_form_submit($form, &$form_state) {
+  global $base_url;
+  global $base_path;
   global $user;
   $modelnid = $form_state['values']['model_nid'];
 
@@ -326,7 +331,7 @@ function modelreview_review_form_submit($form, &$form_state) {
   $title = $row->title;
 
   $subject = "Model Review has been completed";
-  $body = 'The model review case for the model, "'. $title .'", has been completed by the assigned Reviewer. The reviewer\'s notes and recommendation need to be processed by an Editor, and the case processed as needed. You may access this review case by browsing: '. l("http://dev.comses.asu.edu/model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
+  $body = 'The model review case for the model, "'. $title .'", has been completed by the assigned Reviewer. The reviewer\'s notes and recommendation need to be processed by an Editor, and the case processed as needed. You may access this review case by browsing: '. l($base_url . $base_path ."model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
 
   $sql = "SELECT u.uid, u.name FROM users u INNER JOIN users_roles ur ON u.uid = ur.uid "
         ."INNER JOIN permission p ON ur.rid = p.rid WHERE p.perm like '%%%s%%'";
@@ -376,6 +381,8 @@ function modelreview_editor_process_form() {
 }
 
 function modelreview_editor_process_form_submit($form, &$form_state) {
+  global $base_url;
+  global $base_path;
   global $user;
   $modelnid = $form_state['values']['model_nid'];
 
@@ -456,17 +463,17 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
   switch ($form_state['values']['decision']) {
     case 0:
       $subject = "Model Review has been completed, Certification Denied";
-      $body = 'The model review case for your model, "'. $title .'", has been completed by a CoMSES Reviewer. Unfortunately, After reviewing your case, your model has been determined to meet CoMSES Modeling Best-Practices and your model cannot be certified. For more information on this please visit the Model Review Status Page at: '. l("http://dev.comses.asu.edu/model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
+      $body = 'The model review case for your model, "'. $title .'", has been completed by a CoMSES Reviewer. Unfortunately, After reviewing your case, your model has been determined to meet CoMSES Modeling Best-Practices and your model cannot be certified. For more information on this please visit the Model Review Status Page at: '. l($base_url . $base_path ."model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
       break;
 
     case 1:
       $subject = "Model Review has been completed, Revisions Requested";
-      $body = 'The model review case for your model, "'. $title .'", has been completed by the assigned Reviewer. Before your model can be certified, the CoMSES Reviewer has requested some revisions be made to your model in order to fully meet Modeling Best Practes. To review the notes and recommendation for your case, please visit the Model Review Status Page at: '. l("http://dev.comses.asu.edu/model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
+      $body = 'The model review case for your model, "'. $title .'", has been completed by the assigned Reviewer. Before your model can be certified, the CoMSES Reviewer has requested some revisions be made to your model in order to fully meet Modeling Best Practes. To review the notes and recommendation for your case, please visit the Model Review Status Page at: '. l($base_url . $base_path ."model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
       break;
 
     case 2:
       $subject = "Model Review has been completed, Certified";
-      $body = 'The model review case for your model, "'. $title .'", has been completed by a CoMSES Reviewer. After reviewing your case, your model has been determined to meet CoMSES Modeling Best-Practices and is now Certified. You may access this review case by visiting the Model Review Status Page at: '. l("http://dev.comses.asu.edu/model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
+      $body = 'The model review case for your model, "'. $title .'", has been completed by a CoMSES Reviewer. After reviewing your case, your model has been determined to meet CoMSES Modeling Best-Practices and is now Certified. You may access this review case by visiting the Model Review Status Page at: '. l($base_url . $base_path ."model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
       break;
   }
 
@@ -494,6 +501,8 @@ function modelreview_requestrereview_form() {
 }
 
 function modelreview_requestrereview_form_submit($form, &$form_state) {
+  global $base_url;
+  global $base_path;
   $modelnid = $form_state['values']['model_nid'];
 
   // lookup the rid for the open 'modelreview' record
@@ -531,6 +540,28 @@ function modelreview_requestrereview_form_submit($form, &$form_state) {
     'sid' => $review_sid,
   );
   drupal_write_record('modelreview', $review_record, 'rid');
+
+  // notify the Assigned Reviewer
+  // lookup model node
+  $sql = "SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = %d";
+  $result = db_query($sql, $modelnid);
+  $row = db_fetch_object($result);
+  $title = $row->title;
+
+  $subject = "Your Model Review Case requires a Re-Review";
+  $body = 'A model you have reviewed., "'. $title .'," has been revised by the author, and the author has requested a re-review of their case to determine if the model now meets the requirements for certification. You may access this review case by visiting: '. l($base_url . $base_path ."model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
+  notifications_lite_send($reviewer, $subject, $body);
+
+  // notify Editors of the Re-review Request
+  $subject = "Model Re-Review has been requested";
+  $body = 'The author of the model, "'. $title .'", has completed requested revisions and has requested a Re-Review of their model. The assigned Reviewer has been notified that they need to complete the Re-Review. You may access this case by visiting: '. l($base_url . $base_path ."model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
+
+  $sql = "SELECT u.uid, u.name FROM users u INNER JOIN users_roles ur ON u.uid = ur.uid "
+        ."INNER JOIN permission p ON ur.rid = p.rid WHERE p.perm like '%%%s%%'";
+  $results = db_query($sql, 'edit review');
+  while ($row = db_fetch_object($results)) {
+    notifications_lite_send($row->uid, $subject, $body);
+  }
 
   // transfer user to Review form
   drupal_goto('model/'. $modelnid .'/review/status');
