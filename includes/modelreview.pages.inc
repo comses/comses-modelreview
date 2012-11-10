@@ -49,7 +49,7 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
     // get the node id for the latest modelversion, using Views
     $sql = "SELECT node.nid FROM node node LEFT JOIN content_type_modelversion ctmv ON node.vid = ctmv.vid "
           ."LEFT JOIN content_type_modelversion ctmvn ON node.vid = ctmvn.vid "
-          ."WHERE node.type = 'modelversion' AND node.status = 1 AND ctmv.field_modelversion_modelnid_value = 2222 "
+          ."WHERE node.type = 'modelversion' AND node.status = 1 AND ctmv.field_modelversion_modelnid_value = %d "
           ."ORDER BY ctmvn.field_modelversion_number_value DESC LIMIT 1";
     $result = db_query($sql, $modelnid);
     $modelversion_nid = db_result($result);
@@ -146,7 +146,7 @@ function modelreview_assignreviewer_form_submit($form, &$form_state) {
   // get the node id for the latest modelversion, using Views
   $sql = "SELECT node.nid FROM node node LEFT JOIN content_type_modelversion ctmv ON node.vid = ctmv.vid "
         ."LEFT JOIN content_type_modelversion ctmvn ON node.vid = ctmvn.vid "
-        ."WHERE node.type = 'modelversion' AND node.status = 1 AND ctmv.field_modelversion_modelnid_value = 2222 "
+        ."WHERE node.type = 'modelversion' AND node.status = 1 AND ctmv.field_modelversion_modelnid_value = %d "
         ."ORDER BY ctmvn.field_modelversion_number_value DESC LIMIT 1";
   $result = db_query($sql, $modelnid);
   $modelversion_nid = db_result($result);
@@ -288,7 +288,7 @@ function modelreview_review_form_submit($form, &$form_state) {
   // get the node id for the latest modelversion, using Views
   $sql = "SELECT node.nid FROM node node LEFT JOIN content_type_modelversion ctmv ON node.vid = ctmv.vid "
         ."LEFT JOIN content_type_modelversion ctmvn ON node.vid = ctmvn.vid "
-        ."WHERE node.type = 'modelversion' AND node.status = 1 AND ctmv.field_modelversion_modelnid_value = 2222 "
+        ."WHERE node.type = 'modelversion' AND node.status = 1 AND ctmv.field_modelversion_modelnid_value = %d "
         ."ORDER BY ctmvn.field_modelversion_number_value DESC LIMIT 1";
   $result = db_query($sql, $modelnid);
   $modelversion_nid = db_result($result);
@@ -396,7 +396,7 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
   // get the node id for the latest modelversion, using Views
   $sql = "SELECT node.nid FROM node node LEFT JOIN content_type_modelversion ctmv ON node.vid = ctmv.vid "
         ."LEFT JOIN content_type_modelversion ctmvn ON node.vid = ctmvn.vid "
-        ."WHERE node.type = 'modelversion' AND node.status = 1 AND ctmv.field_modelversion_modelnid_value = 2222 "
+        ."WHERE node.type = 'modelversion' AND node.status = 1 AND ctmv.field_modelversion_modelnid_value = %d "
         ."ORDER BY ctmvn.field_modelversion_number_value DESC LIMIT 1";
   $result = db_query($sql, $modelnid);
   $modelversion_nid = db_result($result);
@@ -515,7 +515,7 @@ function modelreview_requestrereview_form_submit($form, &$form_state) {
   // get the node id for the latest modelversion, using Views
   $sql = "SELECT node.nid FROM node node LEFT JOIN content_type_modelversion ctmv ON node.vid = ctmv.vid "
         ."LEFT JOIN content_type_modelversion ctmvn ON node.vid = ctmvn.vid "
-        ."WHERE node.type = 'modelversion' AND node.status = 1 AND ctmv.field_modelversion_modelnid_value = 2222 "
+        ."WHERE node.type = 'modelversion' AND node.status = 1 AND ctmv.field_modelversion_modelnid_value = %d "
         ."ORDER BY ctmvn.field_modelversion_number_value DESC LIMIT 1";
   $result = db_query($sql, $modelnid);
   $modelversion_nid = db_result($result);
