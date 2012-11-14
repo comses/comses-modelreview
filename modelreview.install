@@ -10,6 +10,7 @@ function modelreview_install() {
   drupal_install_schema('modelreview_action');
   drupal_install_schema('modelreview_actiondesc');
   drupal_install_schema('modelreview_compliance');
+  drupal_install_schema('modelreview_recommend');
 
   $sql = "INSERT INTO {modelreview_actiondesc} (`statusid`, `status`) VALUES
     (1, 'Review Requested'),
@@ -28,6 +29,13 @@ function modelreview_install() {
     (2, 'Fully Meets Standards');";
 
   db_query($sql);
+
+  $sql = "INSERT INTO {modelreview_recommend} (`id`, `recommendation`) VALUES
+    (0, 'Do Not Certify (Deny)'),
+    (1, 'Revise (Return to Author)'),
+    (2, 'Certify (Accept)');";
+
+  db_query($sql);
 }
 
 
@@ -39,6 +47,7 @@ function modelreview_uninstall() {
   drupal_uninstall_schema('modelreview_action');
   drupal_uninstall_schema('modelreview_actiondesc');
   drupal_uninstall_schema('modelreview_compliance');
+  drupal_uninstall_schema('modelreview_recommend');
   menu_rebuild();
 }
 
@@ -207,6 +216,25 @@ function modelreview_schema() {
         'not null' => FALSE,),
     ),
     'primary key' => array('cid'),
+  );
+
+  $schema['modelreview_recommend'] = array(
+    'description' => t('Table for describing compliance level'),
+    'fields' => array(
+      'id' => array(
+        'description' => t('The primary identifier for a recommendation code.'),
+        'type' => 'int',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+        'default' => 0),
+      'recommendation' => array(
+        'description' => t('Text description of the recommendation code.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'unsigned' => FALSE,
+        'not null' => FALSE,),
+    ),
+    'primary key' => array('id'),
   );
 
   return $schema;
