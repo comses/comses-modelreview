@@ -252,8 +252,13 @@ function _modelreview_access_content($perms) {
   }
 
   // if reviewer access requested
+  // if reviewer hasn't been assigned yet, deny access
   if (in_array('review model', $perms)) {
-    $reviewer_access = (($user->uid == 1) || user_access('review model'));
+    $sql = "SELECT COUNT(*) FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid WHERE mr.model_nid = %d AND mra.statusid > 1;";
+    $result = db_query($sql, $modelnid);
+    $review_count = db_result($result);
+
+    $reviewer_access = $review_count > 0 && (($user->uid == 1) || user_access('review model'));
   }
 
   return ($author_access || $editor_access || $reviewer_access);
