@@ -225,6 +225,7 @@ function modelreview_perm() {
   return array(
     'review model',
     'edit review',
+    'manage review',
   );
 }
 
@@ -234,7 +235,7 @@ function modelreview_perm() {
 function _modelreview_access_content($perms) {
 
   // if author access requested
-  if (in_array('edit any model', $perms) || in_array('edit own model', $perms)) {
+  if (in_array('edit own model', $perms)) {
     global $user;
     $modelnid = arg(1);
 
@@ -243,7 +244,7 @@ function _modelreview_access_content($perms) {
     $row = db_fetch_object($result);
 
     $author = $row->uid;
-    $author_access = (($user->uid == 1) || user_access('edit any model') || (user_access('edit own model') && $user->uid == $author));
+    $author_access = (($user->uid == 1) || (user_access('edit own model') && $user->uid == $author));
   }
 
   // if editor access requested
