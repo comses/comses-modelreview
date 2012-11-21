@@ -24,7 +24,7 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
   // Verify model does not have an open Review case.
   // "Only one per customer, please." (per model, at one time)
   // Otherwise redirect to Status page with error about an open case already present.
-  $sql = "SELECT COUNT(*) FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mr.sid = mra.sid WHERE mr.model_nid = %d AND mra.statusid < 6;";
+  $sql = "SELECT COUNT(*) FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mr.sid = mra.sid WHERE mr.model_nid = %d AND mra.statusid < 60;";
   $result = db_query($sql, $modelnid);
   $review_count = db_result($result);
 
@@ -58,7 +58,7 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
     $action_record = array(
       'rid' => $review_id,
       'modelversion_nid' => $modelversion_nid,
-      'statusid' => 1,
+      'statusid' => 10,
       'statusdate' => time(),
     );
     drupal_write_record('modelreview_action', $action_record);
@@ -156,7 +156,7 @@ function modelreview_assignreviewer_form_submit($form, &$form_state) {
     'rid' => $review_id,
     'modelversion_nid' => $modelversion_nid,
     'reviewer' => $form_state['values']['reviewer'],
-    'statusid' => 2,
+    'statusid' => 20,
     'statusdate' => time(),
   );
   drupal_write_record('modelreview_action', $action_record);
@@ -203,7 +203,7 @@ function modelreview_review_form() {
     2 => t('Certify (Accept)'),
   );
 
-  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 2 INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
+  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 20 INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
   $result = db_query($sql, arg(1));
   $row = db_fetch_object($result);
 
@@ -298,7 +298,7 @@ function modelreview_review_form_submit($form, &$form_state) {
     'rid' => $form_state['values']['rid'],
     'modelversion_nid' => $modelversion_nid,
     'reviewer' => $form_state['values']['reviewer'],
-    'statusid' => 3,
+    'statusid' => 30,
     'statusdate' => time(),
     'code_clean' => $form_state['values']['code_clean'],
     'code_commented' => $form_state['values']['code_commented'],
@@ -387,7 +387,7 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
   $modelnid = $form_state['values']['model_nid'];
 
   // lookup the rid for the 'modelreview' record
-  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 2 INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
+  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 20 INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
   $result = db_query($sql, arg(1));
   $row = db_fetch_object($result);
   $review_id = $row->rid;
@@ -404,7 +404,7 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
   // we need to lookup the review actions that have been submitted for the editor to review
   // they will be actions that have not been associated ('related') to any editor actions
   $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate "
-        ."FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 3 "
+        ."FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 30 "
         ."INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d AND related = NULL";
   $reviews = db_query($sql, $review['model_nid']);
   // after we add our editor action, we will need to update these review actions to point (via 'related') to our new editor action
@@ -412,15 +412,15 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
   // determine the status id that will need to be recorded here.
   switch ($form_state['values']['decision']) {
     case 0:
-      $step = 7;
+      $step = 70;
       break;
 
     case 1:
-      $step = 4;
+      $step = 40;
       break;
 
     case 2:
-      $step = 6;
+      $step = 60;
       break;
   }
 
@@ -447,7 +447,7 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
   drupal_write_record('modelreview', $review_record, 'rid');
 
   // and update any related review actions with the sid of the new editor action we just created
-  $sql = "UPDATE {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 3 "
+  $sql = "UPDATE {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 30 "
         ."SET related = %d WHERE mr.model_nid = %d AND mra.related IS NULL";
   db_query($sql, $action_sid, $modelnid);
 
@@ -506,7 +506,7 @@ function modelreview_requestrereview_form_submit($form, &$form_state) {
   $modelnid = $form_state['values']['model_nid'];
 
   // lookup the rid for the open 'modelreview' record
-  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 2 INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
+  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 20 INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
   $result = db_query($sql, $modelnid);
   $row = db_fetch_object($result);
   $review_id = $row->rid;
@@ -525,7 +525,7 @@ function modelreview_requestrereview_form_submit($form, &$form_state) {
     'rid' => $review_id,
     'modelversion_nid' => $modelversion_nid,
     'reviewer' => $reviewer,
-    'statusid' => 5,
+    'statusid' => 50,
     'statusdate' => time(),
   );
   drupal_write_record('modelreview_action', $action_record);

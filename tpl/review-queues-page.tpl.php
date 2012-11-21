@@ -33,7 +33,7 @@ $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, status
   ."INNER JOIN node model_node ON mr.model_nid = model_node.nid "
   ."INNER JOIN users ON model_node.uid = users.uid "
   ."LEFT JOIN node model_author ON model_node.uid = model_author.uid AND model_author.type = 'profile' "
-  ."LEFT JOIN content_type_profile ctp2 ON model_author.vid = ctp2.vid WHERE mra.statusid = 1";
+  ."LEFT JOIN content_type_profile ctp2 ON model_author.vid = ctp2.vid WHERE mra.statusid = 10";
 $results = db_query($sql);
 
 if ($row = db_fetch_object($results)) {
@@ -86,7 +86,7 @@ $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, status
   ."INNER JOIN node model_node ON mr.model_nid = model_node.nid "
   ."INNER JOIN users ON model_node.uid = users.uid "
   ."LEFT JOIN node model_author ON model_node.uid = model_author.uid AND model_author.type = 'profile' "
-  ."LEFT JOIN content_type_profile ctp2 ON model_author.vid = ctp2.vid WHERE mra.statusid = 2";
+  ."LEFT JOIN content_type_profile ctp2 ON model_author.vid = ctp2.vid WHERE mra.statusid = 20";
 $results = db_query($sql);
 
 if ($row = db_fetch_object($results)) {
@@ -144,7 +144,7 @@ $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, status
   ."INNER JOIN node model_node ON mr.model_nid = model_node.nid "
   ."INNER JOIN users ON model_node.uid = users.uid "
   ."LEFT JOIN node model_author ON model_node.uid = model_author.uid AND model_author.type = 'profile' "
-  ."LEFT JOIN content_type_profile ctp2 ON model_author.vid = ctp2.vid WHERE mra.statusid = 3";
+  ."LEFT JOIN content_type_profile ctp2 ON model_author.vid = ctp2.vid WHERE mra.statusid = 30";
 $results = db_query($sql);
 
 if ($row = db_fetch_object($results)) {
@@ -202,7 +202,7 @@ $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, status
   ."INNER JOIN node model_node ON mr.model_nid = model_node.nid "
   ."INNER JOIN users ON model_node.uid = users.uid "
   ."LEFT JOIN node model_author ON model_node.uid = model_author.uid AND model_author.type = 'profile' "
-  ."LEFT JOIN content_type_profile ctp2 ON model_author.vid = ctp2.vid WHERE mra.statusid = 4";
+  ."LEFT JOIN content_type_profile ctp2 ON model_author.vid = ctp2.vid WHERE mra.statusid = 40";
 $results = db_query($sql);
 
 if ($row = db_fetch_object($results)) {
@@ -260,7 +260,7 @@ $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, status
   ."INNER JOIN node model_node ON mr.model_nid = model_node.nid "
   ."INNER JOIN users ON model_node.uid = users.uid "
   ."LEFT JOIN node model_author ON model_node.uid = model_author.uid AND model_author.type = 'profile' "
-  ."LEFT JOIN content_type_profile ctp2 ON model_author.vid = ctp2.vid WHERE mra.statusid = 5";
+  ."LEFT JOIN content_type_profile ctp2 ON model_author.vid = ctp2.vid WHERE mra.statusid = 50";
 $results = db_query($sql);
 
 if ($row = db_fetch_object($results)) {

@@ -70,7 +70,7 @@
 
 <?php
   switch ($review['statusid']) {
-    case 1: // Review Requested
+    case 10: // Review Requested
       // Status 1 (Requested): Show model status
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
@@ -81,7 +81,7 @@
       break;
 
 
-    case 2: // Reviewer Assigned
+    case 20: // Reviewer Assigned
       // Status 2 (Assigned): Show model status
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
@@ -90,7 +90,7 @@
       print '  </div>';
       break;
 
-    case 3: // Review Completed
+    case 30: // Review Completed
       // Status 3 (Review Completed): Show model status
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
@@ -100,7 +100,7 @@
 
       break;
 
-    case 4: // Model Revisions Needed
+    case 40: // Model Revisions Needed
       // Status 4 (Revision): Show review comments and instructions, button to request a re-review
       //     Probably should verify latest model version is more recent than the version recorded during Review,
       //     So author can't request re-review until model has been updated to a newer version.
@@ -114,7 +114,7 @@
 
       // Lookup Editor Notes (May be multiple posts due to re-reviews)
       $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, editor_notes, recommendation "
-            ."FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 4 "
+            ."FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 40 "
             ."INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
       $editoractions = db_query($sql, $review['model_nid']);
 
@@ -123,7 +123,7 @@
         $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, "
               ."mc1.compliance AS 'code_clean', mc2.compliance AS 'code_commented', mc3.compliance AS 'model_documented', "
               ."mc4.compliance AS 'model_runs', code_notes, doc_notes, other_notes, editor_notes, mrec.recommendation "
-              ."FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 3 "
+              ."FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 30 "
               ."LEFT JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
               ."LEFT JOIN modelreview_compliance mc1 ON mra.code_clean = mc1.cid "
               ."LEFT JOIN modelreview_compliance mc2 ON mra.code_commented = mc2.cid "
@@ -202,7 +202,7 @@
 
       break;
 
-    case 5: // Re-Review Requested
+    case 50: // Re-Review Requested
       // Status 5 (Re-review): Show model status
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
@@ -212,7 +212,7 @@
 
       break;
 
-    case 6:
+    case 60:
       // Status 6 (Close - Certified): Show Certification info
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
@@ -222,7 +222,7 @@
 
       break;
 
-    case 7:
+    case 70:
       // Status 7 (Close - Denied): Show Denial information
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
@@ -235,7 +235,7 @@
       // Lookup Editor Notes (May be multiple posts due to re-reviews)
       $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, code_clean, code_commented, "
             ."model_documented, model_runs, code_notes, doc_notes, other_notes, editor_notes, recommendation FROM {modelreview} mr "
-            ."INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 4 "
+            ."INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 40 "
             ."INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
       $editoractions = db_query($sql, $review['model_nid']);
 
@@ -245,7 +245,7 @@
         $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, "
               ."mc1.compliance AS 'code_clean', mc2.compliance AS 'code_commented', mc3.compliance AS 'model_documented', "
               ."mc4.compliance AS 'model_runs', code_notes, doc_notes, other_notes, editor_notes, mrec.recommendation "
-              ."FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 3 "
+              ."FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 30 "
               ."INNER JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
               ."INNER JOIN modelreview_compliance mc1 ON mra.code_clean = mc1.cid "
               ."INNER JOIN modelreview_compliance mc2 ON mra.code_clean = mc2.cid "
