@@ -132,24 +132,6 @@ function modelreview_theme() {
  * Implementation of hook_menu()
  */
 function modelreview_menu() {
-
-#  $items['model/%/version/%/request'] = array(
-#    'title' => 'Debug: Request Review',
-#    'description' => "",
-#    'page callback' => '_modelreview_debug_request',
-#    'page arguments' => array(array(1)),
-#    'access callback' => TRUE,
-#    'type' => MENU_LOCAL_TASK,
-#    'weight' => 11,
-#  );
-
-#  // Review Test Message page
-#  $items['model/%/review/test'] = array(
-#    'page callback' => 'modelreview_test_message',
-#    'access callback' => TRUE,
-#    'type' => MENU_CALLBACK,
-#  );
-
   // Review Status page
   $items['model/%/review/status'] = array(
     'title' => 'Review',
@@ -215,6 +197,15 @@ function modelreview_menu() {
     'weight' => 10,
   );
 
+  $items['admin/settings/modelreview'] = array(
+    'title' => 'Model Reviews Settings',
+    'description' => "Configuration settings for Model Reviews",
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_modelreview_admin_settings'),
+    'access arguments' => array('administer model reviews'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
   return $items;
 }
 
@@ -226,6 +217,7 @@ function modelreview_perm() {
     'review model',
     'edit review',
     'manage review',
+    'administer model reviews',
   );
 }
 
@@ -441,3 +433,27 @@ function _modelreview_queues_page() {
 
   return $content;
 }
+
+/**
+ * Admin settings page
+ */
+function _modelreview_admin_settings() {
+  $form = array();
+
+  $form['notifications'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Email Notifications'),
+    '#collapsible' => FALSE, 
+    '#collapsed' => FALSE,
+  );
+
+  $form['notifications']['modelreview_emails_enabled'] = array(
+    '#type' => 'radios', 
+    '#title' => t('Enable/Disable Notifications'), 
+    '#default_value' => variable_get('modelreview_emails_enabled', 0), 
+    '#options' => array(t('Disabled'), t('Enabled')),
+  );
+
+  return system_settings_form($form);
+}
+

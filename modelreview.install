@@ -43,6 +43,8 @@ function modelreview_install() {
  * Implementation of hook_uninstall
  */
 function modelreview_uninstall() {
+  variable_del('modelreview_emails_enabled');
+
   drupal_uninstall_schema('modelreview');
   drupal_uninstall_schema('modelreview_action');
   drupal_uninstall_schema('modelreview_actiondesc');

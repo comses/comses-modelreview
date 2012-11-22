@@ -88,7 +88,9 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
           ."INNER JOIN permission p ON ur.rid = p.rid WHERE p.perm like '%%%s%%'";
     $results = db_query($sql, 'edit review');
     while ($row = db_fetch_object($results)) {
-      notifications_lite_send($row->uid, $subject, $body);
+      if (variable_get('modelreview_emails_enabled', 0) == 1) {
+        notifications_lite_send($row->uid, $subject, $body);
+      }
     }
 
     drupal_goto('model/'. $modelnid .'/review/status');
@@ -181,7 +183,9 @@ function modelreview_assignreviewer_form_submit($form, &$form_state) {
 
   $subject = "You have been assigned a new Model Review case";
   $body = 'You have been assigned a new Model Review case for the model, "'. $title .'". You may access this review case by visiting: '. l($base_url . $base_path ."model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
-  notifications_lite_send($form_state['values']['reviewer'], $subject, $body);
+  if (variable_get('modelreview_emails_enabled', 0) == 1) {
+    notifications_lite_send($form_state['values']['reviewer'], $subject, $body);
+  }
 
   drupal_goto('model/'. $modelnid .'/review/status'); 
 }
@@ -337,7 +341,9 @@ function modelreview_review_form_submit($form, &$form_state) {
         ."INNER JOIN permission p ON ur.rid = p.rid WHERE p.perm like '%%%s%%'";
   $results = db_query($sql, 'edit review');
   while ($row = db_fetch_object($results)) {
-    notifications_lite_send($row->uid, $subject, $body);
+    if (variable_get('modelreview_emails_enabled', 0) == 1) {
+      notifications_lite_send($row->uid, $subject, $body);
+    }
   }
 
   drupal_goto('model/'. $modelnid .'/review/status'); 
@@ -477,7 +483,9 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
       break;
   }
 
-  notifications_lite_send($author, $subject, $body);
+  if (variable_get('modelreview_emails_enabled', 0) == 1) {
+    notifications_lite_send($author, $subject, $body);
+  }
 
   drupal_goto('model/'. $modelnid .'/review/status'); 
 
@@ -550,7 +558,9 @@ function modelreview_requestrereview_form_submit($form, &$form_state) {
 
   $subject = "Your Model Review Case requires a Re-Review";
   $body = 'A model you have reviewed., "'. $title .'," has been revised by the author, and the author has requested a re-review of their case to determine if the model now meets the requirements for certification. You may access this review case by visiting: '. l($base_url . $base_path ."model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
-  notifications_lite_send($reviewer, $subject, $body);
+  if (variable_get('modelreview_emails_enabled', 0) == 1) {
+    notifications_lite_send($reviewer, $subject, $body);
+  }
 
   // notify Editors of the Re-review Request
   $subject = "Model Re-Review has been requested";
@@ -560,7 +570,9 @@ function modelreview_requestrereview_form_submit($form, &$form_state) {
         ."INNER JOIN permission p ON ur.rid = p.rid WHERE p.perm like '%%%s%%'";
   $results = db_query($sql, 'edit review');
   while ($row = db_fetch_object($results)) {
-    notifications_lite_send($row->uid, $subject, $body);
+    if (variable_get('modelreview_emails_enabled', 0) == 1) {
+      notifications_lite_send($row->uid, $subject, $body);
+    }
   }
 
   // transfer user to Review form
