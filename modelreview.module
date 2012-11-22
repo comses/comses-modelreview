@@ -258,12 +258,6 @@ function _modelreview_access_content($perms) {
   return ($author_access || $editor_access || $reviewer_access);
 }
 
-function _modelreview_debug_request() {
-  $modelnid = arg(1);
-
-  drupal_goto('model/'. $modelnid .'/review/status/author');
-}
-
 function _modelreview_request_page() {
   return theme('request_review_page', array( 
         'model_nid' => $modelnid, 
