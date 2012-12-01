@@ -86,9 +86,9 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
 
     $sql = "SELECT u.uid, u.name FROM users u INNER JOIN users_roles ur ON u.uid = ur.uid "
           ."INNER JOIN permission p ON ur.rid = p.rid WHERE p.perm like '%%%s%%'";
-    $results = db_query($sql, 'edit review');
+    $results = db_query($sql, 'manage review');
     while ($row = db_fetch_object($results)) {
-      if (variable_get('modelreview_emails_enabled', 0) == 1 && user_access('manage review')) {
+      if (variable_get('modelreview_emails_enabled', 0) == 1) {
         notifications_lite_send($row->uid, $subject, $body);
       }
     }
@@ -339,9 +339,9 @@ function modelreview_review_form_submit($form, &$form_state) {
 
   $sql = "SELECT u.uid, u.name FROM users u INNER JOIN users_roles ur ON u.uid = ur.uid "
         ."INNER JOIN permission p ON ur.rid = p.rid WHERE p.perm like '%%%s%%'";
-  $results = db_query($sql, 'edit review');
+  $results = db_query($sql, 'manage review');
   while ($row = db_fetch_object($results)) {
-    if (variable_get('modelreview_emails_enabled', 0) == 1 && user_access('manage review')) {
+    if (variable_get('modelreview_emails_enabled', 0) == 1) {
       notifications_lite_send($row->uid, $subject, $body);
     }
   }
@@ -568,9 +568,9 @@ function modelreview_requestrereview_form_submit($form, &$form_state) {
 
   $sql = "SELECT u.uid, u.name FROM users u INNER JOIN users_roles ur ON u.uid = ur.uid "
         ."INNER JOIN permission p ON ur.rid = p.rid WHERE p.perm like '%%%s%%'";
-  $results = db_query($sql, 'edit review');
+  $results = db_query($sql, 'manage review');
   while ($row = db_fetch_object($results)) {
-    if (variable_get('modelreview_emails_enabled', 0) == 1 && user_access('manage review')) {
+    if (variable_get('modelreview_emails_enabled', 0) == 1) {
       notifications_lite_send($row->uid, $subject, $body);
     }
   }
