@@ -1,9 +1,9 @@
-;Id$
-
 name = "CoMSES Model Reviews"
 description = "Model Review system for the CoMSES Model Library"
 package = OpenABM
-version = 6.x-1.0-RC1
-core = 6.x
+version = 7.x-1.0-beta1
+core = 7.x
 php = 5.2
-dependencies[] = notifications_lite
+
+files[] = includes/modelreview.pages
+files[] = includes/modelreview.css

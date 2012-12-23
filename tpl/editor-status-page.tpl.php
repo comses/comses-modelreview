@@ -19,15 +19,15 @@
  * is fine, those sections won't be generated.
  */
 
-?>
-
-<?php  // Determine who is viewing the Status page and the current Review Status Code
+  // Determine who is viewing the Status page and the current Review Status Code
   // Lookup the Model
-  $sql = "SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = %d";
-  $result = db_query($sql, $review['model_nid']);
-  $row = db_fetch_object($result);
+  $sql = "SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = :nid";
+  $result = db_query($sql, array(':nid' => $review['model_nid']));
+  $row = $result->fetchObject();
   $author = $row->author;
   $title = $row->title;
+
+dpm($review);
 ?>
 
 <?php drupal_set_title('Model Review Status'); ?>
@@ -70,7 +70,7 @@
 
 <?php
   switch ($review['statusid']) {
-    case 1: // Review Requested
+    case 10: // Review Requested
       // Status 1 (Requested): Assign Case to Reviewer
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
@@ -86,7 +86,7 @@
       break;
 
 
-    case 2: // Reviewer Assigned
+    case 20: // Reviewer Assigned
       // Status 2 (Assigned): Show model status and who is assigned as Reviewer
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
@@ -100,7 +100,7 @@
 
       break;
 
-    case 3: // Review Completed
+    case 30: // Review Completed
       // Status 3 (Review Completed): Review comments and recommendation, process case (Revise, Close)
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
@@ -115,29 +115,28 @@
       // fetch Editor actions, and report the reviewer reports associated with that editor action
 
       // Lookup Editor Notes (May be multiple posts due to re-reviews)
-      $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, editor_notes, recommendation "
-            ."FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 4 "
-            ."INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
-      $editoractions = db_query($sql, $review['model_nid']);
+      $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, code_clean, code_commented, "
+           . "model_documented, model_runs, code_notes, doc_notes, other_notes, editor_notes, recommendation FROM {modelreview} mr "
+           . "INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 40 "
+           . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = :nid";
+      $editoractions = db_query($sql, array(':nid' => $review['model_nid']));
 
-
-      while ($editor_row = db_fetch_object($editoractions)) {
-
+      while ($editor_row = $editoractions->fetchObject()) {
         // Lookup Reviewer Notes (May be multiple posts due to re-reviews, or multiple reviewers)
         $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, "
-              ."mc1.compliance AS 'code_clean', mc2.compliance AS 'code_commented', mc3.compliance AS 'model_documented', "
-              ."mc4.compliance AS 'model_runs', code_notes, doc_notes, other_notes, editor_notes, mrec.recommendation "
-              ."FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 3 "
-              ."LEFT JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
-              ."LEFT JOIN modelreview_compliance mc1 ON mra.code_clean = mc1.cid "
-              ."LEFT JOIN modelreview_compliance mc2 ON mra.code_commented = mc2.cid "
-              ."LEFT JOIN modelreview_compliance mc3 ON mra.model_documented = mc3.cid "
-              ."LEFT JOIN modelreview_compliance mc4 ON mra.model_runs = mc4.cid "
-              ."LEFT JOIN modelreview_recommend mrec ON mra.recommendation = mrec.id "
-              ."WHERE mr.model_nid = %d AND mra.related = %d";
-        $reviews = db_query($sql, $review['model_nid'], $editor_row->sid);
+             . "mc1.compliance AS 'code_clean', mc2.compliance AS 'code_commented', mc3.compliance AS 'model_documented', "
+             . "mc4.compliance AS 'model_runs', code_notes, doc_notes, other_notes, editor_notes, mrec.recommendation "
+             . "FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 30 "
+             . "INNER JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
+             . "INNER JOIN modelreview_compliance mc1 ON mra.code_clean = mc1.cid "
+             . "INNER JOIN modelreview_compliance mc2 ON mra.code_clean = mc2.cid "
+             . "INNER JOIN modelreview_compliance mc3 ON mra.code_clean = mc3.cid "
+             . "INNER JOIN modelreview_compliance mc4 ON mra.code_clean = mc4.cid "
+             . "INNER JOIN modelreview_recommend mrec ON mra.code_clean = mrec.id "
+             . "WHERE mr.model_nid = :nid AND mra.related = :related";
+        $reviews = db_query($sql, array(':nid' => $review['model_nid'], ':related' => $editor_row->sid));
 
-        while ($review_row = db_fetch_object($reviews)) {
+        while ($review_row = $reviews->fetchObject()) {
           print '  <div class="modelreview-reviewinfo modelreview-section">';
           print '    <div class="modelreview-section-head">';
           print '      <div class="modelreview-label">Review:</div>';
@@ -198,6 +197,7 @@
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Editor\'s Instructions</div>';
           print '      <div class="modelreview-field">';
+          print '        <div class="modelreview-label">Instructions from the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $editor_row->editor_notes .'</div>';
           print '      </div>';
           print '    </div>';
@@ -209,19 +209,19 @@
 
       // Lookup new Reviewer Notes (Not related to any editor actions)
       $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, "
-            ."mc1.compliance AS 'code_clean', mc2.compliance AS 'code_commented', mc3.compliance AS 'model_documented', "
-            ."mc4.compliance AS 'model_runs', code_notes, doc_notes, other_notes, editor_notes, mrec.recommendation "
-            ."FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 3 "
-            ."LEFT JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
-            ."LEFT JOIN modelreview_compliance mc1 ON mra.code_clean = mc1.cid "
-            ."LEFT JOIN modelreview_compliance mc2 ON mra.code_commented = mc2.cid "
-            ."LEFT JOIN modelreview_compliance mc3 ON mra.model_documented = mc3.cid "
-            ."LEFT JOIN modelreview_compliance mc4 ON mra.model_runs = mc4.cid "
-            ."LEFT JOIN modelreview_recommend mrec ON mra.recommendation = mrec.id "
-            ."WHERE mr.model_nid = %d AND mra.related IS NULL";
-      $reviews = db_query($sql, $review['model_nid']);
+           . "mc1.compliance AS 'code_clean', mc2.compliance AS 'code_commented', mc3.compliance AS 'model_documented', "
+           . "mc4.compliance AS 'model_runs', code_notes, doc_notes, other_notes, editor_notes, mrec.recommendation "
+           . "FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 30 "
+           . "LEFT JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
+           . "LEFT JOIN modelreview_compliance mc1 ON mra.code_clean = mc1.cid "
+           . "LEFT JOIN modelreview_compliance mc2 ON mra.code_commented = mc2.cid "
+           . "LEFT JOIN modelreview_compliance mc3 ON mra.model_documented = mc3.cid "
+           . "LEFT JOIN modelreview_compliance mc4 ON mra.model_runs = mc4.cid "
+           . "LEFT JOIN modelreview_recommend mrec ON mra.recommendation = mrec.id "
+           . "WHERE mr.model_nid = :nid AND mra.related IS NULL";
+      $reviews = db_query($sql, array(':nid' => $review['model_nid']));
 
-      while ($review_row = db_fetch_object($reviews)) {
+      while ($review_row = $reviews->fetchObject()) {
           print '  <div class="modelreview-reviewinfo modelreview-section">';
           print '    <div class="modelreview-section-head">';
           print '      <div class="modelreview-label">Review:</div>';
@@ -288,7 +288,7 @@
       print '  </div>';
       break;
 
-    case 4: // Model Revisions Needed
+    case 40: // Model Revisions Needed
       // Status 4 (Revision): Show model status & history
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
@@ -303,27 +303,28 @@
       // fetch Editor actions, and report the reviewer reports associated with that editor action
 
       // Lookup Editor Notes (May be multiple posts due to re-reviews)
-      $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, editor_notes, recommendation "
-            ."FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 4 "
-            ."INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
-      $editoractions = db_query($sql, $review['model_nid']);
+      $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, code_clean, code_commented, "
+           . "model_documented, model_runs, code_notes, doc_notes, other_notes, editor_notes, recommendation FROM {modelreview} mr "
+           . "INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 40 "
+           . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = :nid";
+      $editoractions = db_query($sql, array(':nid' => $review['model_nid']));
 
-      while ($editor_row = db_fetch_object($editoractions)) {
+      while ($editor_row = $editoractions->fetchObject()) {
         // Lookup Reviewer Notes (May be multiple posts due to re-reviews, or multiple reviewers)
         $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, "
-              ."mc1.compliance AS 'code_clean', mc2.compliance AS 'code_commented', mc3.compliance AS 'model_documented', "
-              ."mc4.compliance AS 'model_runs', code_notes, doc_notes, other_notes, editor_notes, mrec.recommendation "
-              ."FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 3 "
-              ."LEFT JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
-              ."LEFT JOIN modelreview_compliance mc1 ON mra.code_clean = mc1.cid "
-              ."LEFT JOIN modelreview_compliance mc2 ON mra.code_commented = mc2.cid "
-              ."LEFT JOIN modelreview_compliance mc3 ON mra.model_documented = mc3.cid "
-              ."LEFT JOIN modelreview_compliance mc4 ON mra.model_runs = mc4.cid "
-              ."LEFT JOIN modelreview_recommend mrec ON mra.recommendation = mrec.id "
-              ."WHERE mr.model_nid = %d AND mra.related = %d";
-        $reviews = db_query($sql, $review['model_nid'], $editor_row->sid);
+             . "mc1.compliance AS 'code_clean', mc2.compliance AS 'code_commented', mc3.compliance AS 'model_documented', "
+             . "mc4.compliance AS 'model_runs', code_notes, doc_notes, other_notes, editor_notes, mrec.recommendation "
+             . "FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 30 "
+             . "INNER JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
+             . "INNER JOIN modelreview_compliance mc1 ON mra.code_clean = mc1.cid "
+             . "INNER JOIN modelreview_compliance mc2 ON mra.code_clean = mc2.cid "
+             . "INNER JOIN modelreview_compliance mc3 ON mra.code_clean = mc3.cid "
+             . "INNER JOIN modelreview_compliance mc4 ON mra.code_clean = mc4.cid "
+             . "INNER JOIN modelreview_recommend mrec ON mra.code_clean = mrec.id "
+             . "WHERE mr.model_nid = :nid AND mra.related = :related";
+        $reviews = db_query($sql, array(':nid' => $review['model_nid'], ':related' => $editor_row->sid));
 
-        while ($review_row = db_fetch_object($reviews)) {
+        while ($review_row = $reviews->fetchObject()) {
           print '  <div class="modelreview-reviewinfo modelreview-section">';
           print '    <div class="modelreview-section-head">';
           print '      <div class="modelreview-label">Review:</div>';
@@ -368,12 +369,10 @@
           print '    </div>';
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Other Review Notes</div>';
-          if (!empty($review_row->other_notes)) {
-            print '      <div class="modelreview-field">';
-            print '        <div class="modelreview-label">Other Notes:</div>';
-            print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
-            print '      </div>';
-          }
+          print '      <div class="modelreview-field">';
+          print '        <div class="modelreview-label">Other Notes:</div>';
+          print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
+          print '      </div>';
           print '      <div class="modelreview-field">';
           print '        <div class="modelreview-label">Notes to the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $review_row->editor_notes .'</div>';
@@ -386,6 +385,7 @@
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Editor\'s Instructions</div>';
           print '      <div class="modelreview-field">';
+          print '        <div class="modelreview-label">Instructions from the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $editor_row->editor_notes .'</div>';
           print '      </div>';
           print '    </div>';
@@ -395,7 +395,7 @@
 
       break;
 
-    case 5: // Re-Review Requested
+    case 50: // Re-Review Requested
       // Status 5 (Re-Review): Show model status & history
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
@@ -410,27 +410,28 @@
       // fetch Editor actions, and report the reviewer reports associated with that editor action
 
       // Lookup Editor Notes (May be multiple posts due to re-reviews)
-      $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, editor_notes, recommendation "
-            ."FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 4 "
-            ."INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
-      $editoractions = db_query($sql, $review['model_nid']);
+      $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, code_clean, code_commented, "
+           . "model_documented, model_runs, code_notes, doc_notes, other_notes, editor_notes, recommendation FROM {modelreview} mr "
+           . "INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 40 "
+           . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = :nid";
+      $editoractions = db_query($sql, array(':nid' => $review['model_nid']));
 
-      while ($editor_row = db_fetch_object($editoractions)) {
+      while ($editor_row = $editoractions->fetchObject()) {
         // Lookup Reviewer Notes (May be multiple posts due to re-reviews, or multiple reviewers)
         $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, "
-              ."mc1.compliance AS 'code_clean', mc2.compliance AS 'code_commented', mc3.compliance AS 'model_documented', "
-              ."mc4.compliance AS 'model_runs', code_notes, doc_notes, other_notes, editor_notes, mrec.recommendation "
-              ."FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 3 "
-              ."LEFT JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
-              ."LEFT JOIN modelreview_compliance mc1 ON mra.code_clean = mc1.cid "
-              ."LEFT JOIN modelreview_compliance mc2 ON mra.code_commented = mc2.cid "
-              ."LEFT JOIN modelreview_compliance mc3 ON mra.model_documented = mc3.cid "
-              ."LEFT JOIN modelreview_compliance mc4 ON mra.model_runs = mc4.cid "
-              ."LEFT JOIN modelreview_recommend mrec ON mra.recommendation = mrec.id "
-              ."WHERE mr.model_nid = %d AND mra.related = %d";
-        $reviews = db_query($sql, $review['model_nid'], $editor_row->sid);
+             . "mc1.compliance AS 'code_clean', mc2.compliance AS 'code_commented', mc3.compliance AS 'model_documented', "
+             . "mc4.compliance AS 'model_runs', code_notes, doc_notes, other_notes, editor_notes, mrec.recommendation "
+             . "FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 30 "
+             . "INNER JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
+             . "INNER JOIN modelreview_compliance mc1 ON mra.code_clean = mc1.cid "
+             . "INNER JOIN modelreview_compliance mc2 ON mra.code_clean = mc2.cid "
+             . "INNER JOIN modelreview_compliance mc3 ON mra.code_clean = mc3.cid "
+             . "INNER JOIN modelreview_compliance mc4 ON mra.code_clean = mc4.cid "
+             . "INNER JOIN modelreview_recommend mrec ON mra.code_clean = mrec.id "
+             . "WHERE mr.model_nid = :nid AND mra.related = :related";
+        $reviews = db_query($sql, array(':nid' => $review['model_nid'], ':related' => $editor_row->sid));
 
-        while ($review_row = db_fetch_object($reviews)) {
+        while ($review_row = $reviews->fetchObject()) {
           print '  <div class="modelreview-reviewinfo modelreview-section">';
           print '    <div class="modelreview-section-head">';
           print '      <div class="modelreview-label">Review:</div>';
@@ -474,12 +475,10 @@
           print '    </div>';
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Other Review Notes</div>';
-          if (!empty($review_row->other_notes)) {
-            print '      <div class="modelreview-field">';
-            print '        <div class="modelreview-label">Other Notes:</div>';
-            print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
-            print '      </div>';
-          }
+          print '      <div class="modelreview-field">';
+          print '        <div class="modelreview-label">Other Notes:</div>';
+          print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
+          print '      </div>';
           print '      <div class="modelreview-field">';
           print '        <div class="modelreview-label">Notes to the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $review_row->editor_notes .'</div>';
@@ -492,6 +491,7 @@
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Editor\'s Instructions</div>';
           print '      <div class="modelreview-field">';
+          print '        <div class="modelreview-label">Instructions from the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $editor_row->editor_notes .'</div>';
           print '      </div>';
           print '    </div>';
@@ -501,7 +501,7 @@
 
       break;
 
-    case 6:
+    case 60:
       // Status 6 (Closed - Certified): Show model status & history
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
@@ -516,27 +516,28 @@
       // fetch Editor actions, and report the reviewer reports associated with that editor action
 
       // Lookup Editor Notes (May be multiple posts due to re-reviews)
-      $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, editor_notes, recommendation "
-            ."FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 4 "
-            ."INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
-      $editoractions = db_query($sql, $review['model_nid']);
+      $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, code_clean, code_commented, "
+           . "model_documented, model_runs, code_notes, doc_notes, other_notes, editor_notes, recommendation FROM {modelreview} mr "
+           . "INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 40 "
+           . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = :nid";
+      $editoractions = db_query($sql, array(':nid' => $review['model_nid']));
 
-      while ($editor_row = db_fetch_object($editoractions)) {
+      while ($editor_row = $editoractions->fetchObject()) {
         // Lookup Reviewer Notes (May be multiple posts due to re-reviews, or multiple reviewers)
         $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, "
-              ."mc1.compliance AS 'code_clean', mc2.compliance AS 'code_commented', mc3.compliance AS 'model_documented', "
-              ."mc4.compliance AS 'model_runs', code_notes, doc_notes, other_notes, editor_notes, mrec.recommendation "
-              ."FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 3 "
-              ."LEFT JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
-              ."LEFT JOIN modelreview_compliance mc1 ON mra.code_clean = mc1.cid "
-              ."LEFT JOIN modelreview_compliance mc2 ON mra.code_commented = mc2.cid "
-              ."LEFT JOIN modelreview_compliance mc3 ON mra.model_documented = mc3.cid "
-              ."LEFT JOIN modelreview_compliance mc4 ON mra.model_runs = mc4.cid "
-              ."LEFT JOIN modelreview_recommend mrec ON mra.recommendation = mrec.id "
-              ."WHERE mr.model_nid = %d AND mra.related = %d";
-        $reviews = db_query($sql, $review['model_nid'], $editor_row->sid);
+             . "mc1.compliance AS 'code_clean', mc2.compliance AS 'code_commented', mc3.compliance AS 'model_documented', "
+             . "mc4.compliance AS 'model_runs', code_notes, doc_notes, other_notes, editor_notes, mrec.recommendation "
+             . "FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 30 "
+             . "INNER JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
+             . "INNER JOIN modelreview_compliance mc1 ON mra.code_clean = mc1.cid "
+             . "INNER JOIN modelreview_compliance mc2 ON mra.code_clean = mc2.cid "
+             . "INNER JOIN modelreview_compliance mc3 ON mra.code_clean = mc3.cid "
+             . "INNER JOIN modelreview_compliance mc4 ON mra.code_clean = mc4.cid "
+             . "INNER JOIN modelreview_recommend mrec ON mra.code_clean = mrec.id "
+             . "WHERE mr.model_nid = :nid AND mra.related = :related";
+        $reviews = db_query($sql, array(':nid' => $review['model_nid'], ':related' => $editor_row->sid));
 
-        while ($review_row = db_fetch_object($reviews)) {
+        while ($review_row = $reviews->fetchObject()) {
           print '  <div class="modelreview-reviewinfo modelreview-section">';
           print '    <div class="modelreview-section-head">';
           print '      <div class="modelreview-label">Review:</div>';
@@ -580,12 +581,10 @@
           print '    </div>';
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Other Review Notes</div>';
-          if (!empty($review_row->other_notes)) {
-            print '      <div class="modelreview-field">';
-            print '        <div class="modelreview-label">Other Notes:</div>';
-            print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
-            print '      </div>';
-          }
+          print '      <div class="modelreview-field">';
+          print '        <div class="modelreview-label">Other Notes:</div>';
+          print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
+          print '      </div>';
           print '      <div class="modelreview-field">';
           print '        <div class="modelreview-label">Notes to the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $review_row->editor_notes .'</div>';
@@ -598,6 +597,7 @@
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Editor\'s Instructions</div>';
           print '      <div class="modelreview-field">';
+          print '        <div class="modelreview-label">Instructions from the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $editor_row->editor_notes .'</div>';
           print '      </div>';
           print '    </div>';
@@ -607,7 +607,7 @@
 
       break;
 
-    case 7:
+    case 70:
       // Status 7 (Closed - Denied): Show model status & history
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
@@ -622,27 +622,28 @@
       // fetch Editor actions, and report the reviewer reports associated with that editor action
 
       // Lookup Editor Notes (May be multiple posts due to re-reviews)
-      $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, editor_notes, recommendation "
-            ."FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 4 "
-            ."INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
-      $editoractions = db_query($sql, $review['model_nid']);
+      $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, code_clean, code_commented, "
+           . "model_documented, model_runs, code_notes, doc_notes, other_notes, editor_notes, recommendation FROM {modelreview} mr "
+           . "INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 40 "
+           . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = :nid";
+      $editoractions = db_query($sql, array(':nid' => $review['model_nid']));
 
-      while ($editor_row = db_fetch_object($editoractions)) {
+      while ($editor_row = $editoractions->fetchObject()) {
         // Lookup Reviewer Notes (May be multiple posts due to re-reviews, or multiple reviewers)
         $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, "
-              ."mc1.compliance AS 'code_clean', mc2.compliance AS 'code_commented', mc3.compliance AS 'model_documented', "
-              ."mc4.compliance AS 'model_runs', code_notes, doc_notes, other_notes, editor_notes, mrec.recommendation "
-              ."FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 3 "
-              ."LEFT JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
-              ."LEFT JOIN modelreview_compliance mc1 ON mra.code_clean = mc1.cid "
-              ."LEFT JOIN modelreview_compliance mc2 ON mra.code_commented = mc2.cid "
-              ."LEFT JOIN modelreview_compliance mc3 ON mra.model_documented = mc3.cid "
-              ."LEFT JOIN modelreview_compliance mc4 ON mra.model_runs = mc4.cid "
-              ."LEFT JOIN modelreview_recommend mrec ON mra.recommendation = mrec.id "
-              ."WHERE mr.model_nid = %d AND mra.related = %d";
-        $reviews = db_query($sql, $review['model_nid'], $editor_row->sid);
+             . "mc1.compliance AS 'code_clean', mc2.compliance AS 'code_commented', mc3.compliance AS 'model_documented', "
+             . "mc4.compliance AS 'model_runs', code_notes, doc_notes, other_notes, editor_notes, mrec.recommendation "
+             . "FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 30 "
+             . "INNER JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
+             . "INNER JOIN modelreview_compliance mc1 ON mra.code_clean = mc1.cid "
+             . "INNER JOIN modelreview_compliance mc2 ON mra.code_clean = mc2.cid "
+             . "INNER JOIN modelreview_compliance mc3 ON mra.code_clean = mc3.cid "
+             . "INNER JOIN modelreview_compliance mc4 ON mra.code_clean = mc4.cid "
+             . "INNER JOIN modelreview_recommend mrec ON mra.code_clean = mrec.id "
+             . "WHERE mr.model_nid = :nid AND mra.related = :related";
+        $reviews = db_query($sql, array(':nid' => $review['model_nid'], ':related' => $editor_row->sid));
 
-        while ($review_row = db_fetch_object($reviews)) {
+        while ($review_row = $reviews->fetchObject()) {
           print '  <div class="modelreview-reviewinfo modelreview-section">';
           print '    <div class="modelreview-section-head">';
           print '      <div class="modelreview-label">Review:</div>';
@@ -686,12 +687,10 @@
           print '    </div>';
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Other Review Notes</div>';
-          if (!empty($review_row->other_notes)) {
-            print '      <div class="modelreview-field">';
-            print '        <div class="modelreview-label">Other Notes:</div>';
-            print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
-            print '      </div>';
-          }
+          print '      <div class="modelreview-field">';
+          print '        <div class="modelreview-label">Other Notes:</div>';
+          print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
+          print '      </div>';
           print '      <div class="modelreview-field">';
           print '        <div class="modelreview-label">Notes to the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $review_row->editor_notes .'</div>';
@@ -704,6 +703,7 @@
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Editor\'s Instructions</div>';
           print '      <div class="modelreview-field">';
+          print '        <div class="modelreview-label">Instructions from the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $editor_row->editor_notes .'</div>';
           print '      </div>';
           print '    </div>';
@@ -715,7 +715,7 @@
 
     default:
       // No review requested: invalid page
-      drupal_set_message('You are not authorized to view this information.');
+      drupal_set_message(t('You are not authorized to view this information.'));
       drupal_goto('page/invalid-request'); 
       break;
   }

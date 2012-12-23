@@ -30,7 +30,7 @@ module_load_include('inc', 'modelreview', 'includes/modelreview.pages');
 function modelreview_help($path, $arg) {
   if ($path == 'admin/help#modelreview') {
     $txt = 'The CoMSES Model Review module provides an interface for reviewing and certifying models.';
-    return '<p>'. t($txt) .'</p>';
+    return '<p>' . t($txt) . '</p>';
   }
 }
 
@@ -39,7 +39,7 @@ function modelreview_help($path, $arg) {
  *
  */
 function modelreview_init() {
-  drupal_add_css(drupal_get_path('module', 'modelreview') .'/includes/modelreview.css');
+  drupal_add_css(drupal_get_path('module', 'modelreview') . '/includes/modelreview.css');
 }
 
 /**
@@ -49,7 +49,7 @@ function modelreview_init() {
 function modelreview_theme() {
   return array(
     'author_status_page' => array(
-      'arguments' => array(
+      'variables' => array(
         'review' => array(
           'model_nid' => NULL,
           'modelversion_nid' => NULL,
@@ -63,10 +63,10 @@ function modelreview_theme() {
         ),
       ),
       'template' => 'author-status-page',
-      'path' => drupal_get_path('module', 'modelreview') .'/tpl',
+      'path' => drupal_get_path('module', 'modelreview') . '/tpl',
     ),
     'editor_status_page' => array(
-      'arguments' => array(
+      'variables' => array(
         'review' => array(
           'model_nid' => NULL,
           'modelversion_nid' => NULL,
@@ -80,10 +80,10 @@ function modelreview_theme() {
         ),
       ),
       'template' => 'editor-status-page',
-      'path' => drupal_get_path('module', 'modelreview') .'/tpl',
+      'path' => drupal_get_path('module', 'modelreview') . '/tpl',
     ),
     'reviewer_status_page' => array(
-      'arguments' => array(
+      'variables' => array(
         'review' => array(
           'model_nid' => NULL,
           'modelversion_nid' => NULL,
@@ -97,19 +97,19 @@ function modelreview_theme() {
         ),
       ),
       'template' => 'reviewer-status-page',
-      'path' => drupal_get_path('module', 'modelreview') .'/tpl',
+      'path' => drupal_get_path('module', 'modelreview') . '/tpl',
     ),
     'request_review_page' => array(
-      'arguments' => array(
+      'variables' => array(
         'review' => array(
           'model_nid' => NULL,
         ),
       ),
       'template' => 'request-review-page',
-      'path' => drupal_get_path('module', 'modelreview') .'/tpl',
+      'path' => drupal_get_path('module', 'modelreview') . '/tpl',
     ),
     'review_queues_page' => array(
-      'arguments' => array(
+      'variables' => array(
         'review' => array(
           'model_nid' => NULL,
           'modelversion_nid' => NULL,
@@ -123,7 +123,7 @@ function modelreview_theme() {
         ),
       ),
       'template' => 'review-queues-page',
-      'path' => drupal_get_path('module', 'modelreview') .'/tpl',
+      'path' => drupal_get_path('module', 'modelreview') . '/tpl',
     ),
   );
 }
@@ -133,30 +133,14 @@ function modelreview_theme() {
  */
 function modelreview_menu() {
 
-#  $items['model/%/version/%/request'] = array(
-#    'title' => 'Debug: Request Review',
-#    'description' => "",
-#    'page callback' => '_modelreview_debug_request',
-#    'page arguments' => array(array(1)),
-#    'access callback' => TRUE,
-#    'type' => MENU_LOCAL_TASK,
-#    'weight' => 11,
-#  );
-
-#  // Review Test Message page
-#  $items['model/%/review/test'] = array(
-#    'page callback' => 'modelreview_test_message',
-#    'access callback' => TRUE,
-#    'type' => MENU_CALLBACK,
-#  );
-
   // Review Status page
   $items['model/%/review/status'] = array(
     'title' => 'Review',
     'description' => "",
-    'page callback' => '_modelreview_goto_status',
+    'page callback' => 'modelreview_goto_status',
     'page arguments' => array(array(1)),
-    'access callback' => '_modelreview_access_content',
+    #'access callback' => 'modelreview_access_content',
+    'access callback' => TRUE,
     'access arguments' => array(array('edit review', 'review model', 'edit any model', 'edit own model')),
     'type' => MENU_CALLBACK,
   );
@@ -164,10 +148,11 @@ function modelreview_menu() {
   $items['model/%/review/status/author'] = array(
     'title' => 'Author',
     'description' => "",
-    'page callback' => '_modelreview_status_page',
+    'page callback' => 'modelreview_status_page',
     'page arguments' => array(array(1, 4)),
-    'access callback' => '_modelreview_access_content',
-    'access arguments' => array(array('edit any model', 'edit own model')),
+    'access callback' => TRUE,
+    #'access callback' => 'modelreview_access_content',
+    #'access arguments' => array(array('edit any model', 'edit own model')),
     'type' => MENU_LOCAL_TASK,
     'weight' => 1,
   );
@@ -175,10 +160,11 @@ function modelreview_menu() {
   $items['model/%/review/status/editor'] = array(
     'title' => 'Editor',
     'description' => "",
-    'page callback' => '_modelreview_status_page',
+    'page callback' => 'modelreview_status_page',
     'page arguments' => array(array(1, 4)),
-    'access callback' => '_modelreview_access_content',
-    'access arguments' => array(array('edit review')),
+    'access callback' => TRUE,
+    #'access callback' => 'modelreview_access_content',
+    #'access arguments' => array(array('edit review')),
     'type' => MENU_LOCAL_TASK,
     'weight' => 2,
   );
@@ -186,10 +172,11 @@ function modelreview_menu() {
   $items['model/%/review/status/reviewer'] = array(
     'title' => 'Reviewer',
     'description' => "",
-    'page callback' => '_modelreview_status_page',
+    'page callback' => 'modelreview_status_page',
     'page arguments' => array(array(1, 4)),
-    'access callback' => '_modelreview_access_content',
-    'access arguments' => array(array('review model')),
+    'access callback' => TRUE,
+    #'access callback' => 'modelreview_access_content',
+    #'access arguments' => array(array('review model')),
     'type' => MENU_LOCAL_TASK,
     'weight' => 3,
   ); 
@@ -198,19 +185,21 @@ function modelreview_menu() {
   $items['model/%/review/info'] = array(
     'title' => 'Request A Model Review',
     'description' => "",
-    'page callback' => '_modelreview_request_page',
-    'access callback' => '_modelreview_access_content',
-    'access arguments' => array(array('edit any model', 'edit own model')),
+    'page callback' => 'modelreview_request_page',
+    'access callback' => TRUE,
+    #'access callback' => 'modelreview_access_content',
+    #'access arguments' => array(array('edit any model', 'edit own model')),
     'type' => MENU_CALLBACK,
   );
   
   $items['models/reviews'] = array(
     'title' => 'Reviews',
     'description' => "",
-    'page callback' => '_modelreview_queues_page',
+    'page callback' => 'modelreview_queues_page',
     //'page arguments' => array(array(1, 4)),
-    'access callback' => '_modelreview_access_content',
-    'access arguments' => array(array('edit review', 'review model')),
+    'access callback' => TRUE,
+    #'access callback' => 'modelreview_access_content',
+    #'access arguments' => array(array('edit review', 'review model')),
     'type' => MENU_LOCAL_TASK,
     'weight' => 10,
   );
@@ -221,7 +210,7 @@ function modelreview_menu() {
 /**
  * Implementation of hook_perm().
  */
-function modelreview_perm() {
+function modelreview_permission() {
   return array(
     'review model',
     'edit review',
@@ -231,16 +220,16 @@ function modelreview_perm() {
 /**
  * Implementation of custom access callback function
  */
-function _modelreview_access_content($perms) {
+function modelreview_access_content($perms) {
 
   // if author access requested
   if (in_array('edit any model', $perms) || in_array('edit own model', $perms)) {
     global $user;
     $modelnid = arg(1);
 
-    $sql = "SELECT nid, uid FROM {node} WHERE type = 'model' AND node.nid = %d";
-    $result = db_query($sql, $modelnid);
-    $row = db_fetch_object($result);
+    $sql = "SELECT nid, uid FROM {node} WHERE type = 'model' AND node.nid = :nid";
+    $result = db_query($sql, array(':nid' => $modelnid));
+    $row = $result->fetchObject();
 
     $author = $row->uid;
     $author_access = (($user->uid == 1) || user_access('edit any model') || (user_access('edit own model') && $user->uid == $author));
@@ -255,9 +244,9 @@ function _modelreview_access_content($perms) {
   // if reviewer hasn't been assigned yet, deny access
   if (in_array('review model', $perms)) {
     $modelnid = arg(1);
-    $sql = "SELECT COUNT(*) FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid WHERE mr.model_nid = %d AND mra.statusid > 1;";
-    $result = db_query($sql, $modelnid);
-    $review_count = db_result($result);
+    $sql = "SELECT COUNT(*) FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid WHERE mr.model_nid = :nid AND mra.statusid > 10;";
+    $result = db_query($sql, array(':nid' => $modelnid));
+    $review_count = $result->fetchField();
 
     $reviewer_access = ($review_count > 0) && (($user->uid == 1) || user_access('review model'));
   }
@@ -265,13 +254,13 @@ function _modelreview_access_content($perms) {
   return ($author_access || $editor_access || $reviewer_access);
 }
 
-function _modelreview_debug_request() {
+function modelreview_debug_request() {
   $modelnid = arg(1);
 
-  drupal_goto('model/'. $modelnid .'/review/status/author');
+  drupal_goto('model/' . $modelnid . '/review/status/author');
 }
 
-function _modelreview_request_page() {
+function modelreview_request_page() {
   return theme('request_review_page', array( 
         'model_nid' => $modelnid, 
       ));
@@ -283,39 +272,45 @@ function _modelreview_request_page() {
  * This redirects the user to the default Status tab.
  * 
  */
-function _modelreview_goto_status() {
+function modelreview_goto_status() {
   global $user;
   $modelnid = arg(1);
 
   // Determine who is viewing the Status page and the current Review Status Code
   // Lookup the Model author
-  $sql = "SELECT nid, uid FROM {node} WHERE type = 'model' AND node.nid = %d";
-  $result = db_query($sql, $modelnid);
-  $row = db_fetch_object($result);
+  $sql = "SELECT nid, uid FROM {node} WHERE type = 'model' AND node.nid = :nid";
+  $result = db_query($sql, array(':nid' => $modelnid));
+  $row = $result->fetchObject();
   $author = $row->uid;
 
   // Lookup Review for Assigned Reviewer
-  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer, field_fullname_value as reviewer_name "
-        ."FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 2 "
-        ."INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid "
-        ."LEFT JOIN {node} ON reviewer = node.uid AND node.type = 'profile' LEFT JOIN {content_type_profile} ctp ON node.vid = ctp.vid "
-        ."WHERE mr.model_nid = %d";
-  $result = db_query($sql, arg(1));
-  $row = db_fetch_object($result);
-  $reviewer = $row->reviewer_name;
+  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, mra.statusdate, mra.reviewer, "
+       . "reviewer_firstname.field_prfl_firstname_value as firstname, reviewer_lastname.field_prfl_lastname_value as lastname "
+       . "FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 20 "
+       . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid "
+       . "LEFT JOIN {users} reviewer ON mra.reviewer = reviewer.uid "
+       . "LEFT JOIN {field_data_field_prfl_firstname} reviewer_firstname ON reviewer.uid = reviewer_firstname.entity_id "
+       . "LEFT JOIN {field_data_field_prfl_lastname} reviewer_lastname ON reviewer.uid = reviewer_lastname.entity_id "
+       . "WHERE mr.model_nid = :nid";
+  $result = db_query($sql, array(':nid' => $modelnid));
+  $row = $result->fetchObject();
+  $reviewer = $row->lastname;
 
   // set mode according to rules:
   // 1. If user owns model being viewed, use Author mode.
   // 2. If user is assigned as model Reviewer, then use Reviewer mode.
   // 3. If user is an Editor, then use Editor mode.
   if ($user->uid == $author) {
-    drupal_goto('model/'. $modelnid .'/review/status/author');
-  } elseif (user_access('edit review') && $user->uid == $reviewer) {
-    drupal_goto('model/'. $modelnid .'/review/status/reviewer');
-  } elseif (($user->uid == 1) || user_access('edit review')) {
-    drupal_goto('model/'. $modelnid .'/review/status/editor');
-  } else {
-    drupal_set_message('You are not authorized to view this model information.');
+    drupal_goto('model/' . $modelnid . '/review/status/author');
+  } 
+  elseif (user_access('edit review') && $user->uid == $reviewer) {
+    drupal_goto('model/' . $modelnid . '/review/status/reviewer');
+  } 
+  elseif (($user->uid == 1) || user_access('edit review')) {
+    drupal_goto('model/' . $modelnid . '/review/status/editor');
+  } 
+  else {
+    drupal_set_message(t('You are not authorized to view this model information.'));
     drupal_goto('page/invalid-request');
   }
 }
@@ -326,24 +321,25 @@ function _modelreview_goto_status() {
  * This is the Review Request Page, which a model author views prior to requesting
  * a review of their model.
  */
-function _modelreview_request_review() {
+function modelreview_request_review() {
   $modelnid = arg(1);
 
   // check if modelversion has been reviewed yet.
   // if not, then provide info on the process.
   // if so, then redirect to the review status page
 
-  $sql = "SELECT COUNT(*) FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid WHERE mr.model_nid = %d AND mra.statusid < 6;";
-  $result = db_query($sql, $modelnid);
-  $review_count = db_result($result);
+  $sql = "SELECT COUNT(*) FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid WHERE mr.model_nid = :nid AND mra.statusid < 60;";
+  $result = db_query($sql, array(':nid' => $modelnid));
+  $review_count = $result->fetchField();
 
   if ($review_count == 0) {
     $content = theme('request_review_page', array( 
         'model_nid' => $modelnid, 
       ));
     return $content; 
-  } else {
-    drupal_goto('model/'. $modelnid .'/review/status');
+  } 
+  else {
+    drupal_goto('model/' . $modelnid . '/review/status');
   } 
 }
 
@@ -355,28 +351,31 @@ function _modelreview_request_review() {
  * The specific information displayed and available actions that can be taken from here depends on
  * who is viewing the page.
  */
-function _modelreview_status_page() {
+function modelreview_status_page() {
   global $user;
   $modelnid = arg(1);
 
   // Lookup Review for Assigned Reviewer
   $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, mra.statusdate, mra.reviewer, "
-        ."field_fullname_value as reviewer_name FROM {modelreview} mr "
-        ."INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 2 "
-        ."INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid "
-        ."LEFT JOIN {node} ON mra.reviewer = node.uid AND node.type = 'profile' "
-        ."LEFT JOIN {content_type_profile} ctp ON node.vid = ctp.vid "
-        ."WHERE mr.model_nid = %d";
-  $result = db_query($sql, $modelnid);
-  $row = db_fetch_object($result);
-  $reviewer = $row->reviewer_name;
+       . "reviewer_firstname.field_prfl_firstname_value as firstname, reviewer_lastname.field_prfl_lastname_value as lastname "
+       . "FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 20 "
+       . "INNER JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
+       . "LEFT JOIN users reviewer ON mra.reviewer = reviewer.uid "
+       . "LEFT JOIN field_data_field_prfl_firstname reviewer_firstname ON reviewer.uid = reviewer_firstname.entity_id "
+       . "LEFT JOIN field_data_field_prfl_lastname reviewer_lastname ON reviewer.uid = reviewer_lastname.entity_id "
+       . "WHERE mr.model_nid = :nid";
+  $result = db_query($sql, array(':nid' => $modelnid));
+  $row = $result->fetchObject();
+  $reviewer = $row->lastname;
 
   $usermode = arg(4); // view status page in this mode (Author, Editor, or Reviewer)
 
   // lookup the current status of the open 'modelreview' record
-  $sql = "SELECT mr.rid, mr.sid, mr.model_nid, modelversion_nid, related, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = %d";
-  $result = db_query($sql, $modelnid);
-  $row = db_fetch_object($result);
+  $sql = "SELECT mr.rid, mr.sid, mr.model_nid, modelversion_nid, related, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = :nid";
+  $result = db_query($sql, array(':nid' => $modelnid));
+  $row = $result->fetchObject();
+
+  dpm($row);
 
   switch ($usermode) {
     case 'author':
@@ -432,7 +431,7 @@ function _modelreview_status_page() {
  * The specific information displayed and available actions that can be taken from here depends on
  * who is viewing the page.
  */
-function _modelreview_queues_page() {
+function modelreview_queues_page() {
   global $user;
 
   $content = theme('review_queues_page', array(
