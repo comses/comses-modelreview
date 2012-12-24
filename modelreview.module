@@ -144,7 +144,7 @@ function modelreview_menu() {
     'description' => "",
     'page callback' => 'modelreview_goto_status',
     'page arguments' => array(array(1)),
-    'access callback' => '_modelreview_access_content',
+    'access callback' => 'modelreview_access_content',
     'access arguments' => array(array('edit review', 'review model', 'edit any model', 'edit own model')),
     'type' => MENU_CALLBACK,
   );
@@ -154,7 +154,7 @@ function modelreview_menu() {
     'description' => "",
     'page callback' => 'modelreview_status_page',
     'page arguments' => array(array(1, 4)),
-    'access callback' => '_modelreview_access_content',
+    'access callback' => 'modelreview_access_content',
     'access arguments' => array(array('edit any model', 'edit own model')),
     'type' => MENU_LOCAL_TASK,
     'weight' => 1,
@@ -165,7 +165,7 @@ function modelreview_menu() {
     'description' => "",
     'page callback' => 'modelreview_status_page',
     'page arguments' => array(array(1, 4)),
-    'access callback' => '_modelreview_access_content',
+    'access callback' => 'modelreview_access_content',
     'access arguments' => array(array('edit review')),
     'type' => MENU_LOCAL_TASK,
     'weight' => 2,
@@ -176,9 +176,8 @@ function modelreview_menu() {
     'description' => "",
     'page callback' => 'modelreview_status_page',
     'page arguments' => array(array(1, 4)),
-    'access callback' => TRUE,
-    #'access callback' => 'modelreview_access_content',
-    #'access arguments' => array(array('review model')),
+    'access callback' => 'modelreview_access_content',
+    'access arguments' => array(array('review model')),
     'type' => MENU_LOCAL_TASK,
     'weight' => 3,
   ); 
@@ -187,8 +186,8 @@ function modelreview_menu() {
   $items['model/%/review/info'] = array(
     'title' => 'Request A Model Review',
     'description' => "",
-    'page callback' => '_modelreview_request_page',
-    'access callback' => '_modelreview_access_content',
+    'page callback' => 'modelreview_request_page',
+    'access callback' => 'modelreview_access_content',
     'access arguments' => array(array('edit any model', 'edit own model')),
     'type' => MENU_CALLBACK,
   );
@@ -198,7 +197,7 @@ function modelreview_menu() {
     'description' => "",
     'page callback' => 'modelreview_queues_page',
     //'page arguments' => array(array(1, 4)),
-    'access callback' => '_modelreview_access_content',
+    'access callback' => 'modelreview_access_content',
     'access arguments' => array(array('edit review', 'review model')),
     'type' => MENU_LOCAL_TASK,
     'weight' => 10,
@@ -208,7 +207,7 @@ function modelreview_menu() {
     'title' => 'Model Reviews Settings',
     'description' => "Configuration settings for Model Reviews",
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('_modelreview_admin_settings'),
+    'page arguments' => array('modelreview_admin_settings'),
     'access arguments' => array('administer model reviews'),
     'type' => MENU_NORMAL_ITEM,
   );
@@ -265,7 +264,7 @@ function modelreview_access_content($perms) {
   return ($author_access || $editor_access || $reviewer_access);
 }
 
-function _modelreview_request_page() {
+function modelreview_request_page() {
   return theme('request_review_page', array( 
         'model_nid' => $modelnid, 
       ));
@@ -446,7 +445,7 @@ function modelreview_queues_page() {
 /**
  * Admin settings page
  */
-function _modelreview_admin_settings() {
+function modelreview_admin_settings() {
   $form = array();
 
   $form['notifications'] = array(
