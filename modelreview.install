@@ -9,13 +9,13 @@
  */
 function modelreview_install() {
   $sql = "INSERT INTO {modelreview_actiondesc} (`statusid`, `status`) VALUES
-    (1, 'Review Requested'),
-    (2, 'Assigned to Reviewer'),
-    (3, 'Review Completed'),
-    (4, 'Return to Author for Revision'),
-    (5, 'Revision Completed, Re-Review Requested'),
-    (6, 'Review Closed - Model Certified'),
-    (7, 'Review Closed - Certification Denied');";
+    (10, 'Review Requested'),
+    (20, 'Assigned to Reviewer'),
+    (30, 'Review Completed'),
+    (40, 'Return to Author for Revision'),
+    (50, 'Revision Completed, Re-Review Requested'),
+    (60, 'Review Closed - Model Certified'),
+    (70, 'Review Closed - Certification Denied');";
 
   db_query($sql);
 
@@ -39,6 +39,7 @@ function modelreview_install() {
  * Implementation of hook_uninstall
  */
 function modelreview_uninstall() {
+  variable_del('modelreview_emails_enabled');
   menu_rebuild();
 }
 
@@ -251,5 +252,16 @@ function modelreview_schema() {
   );
 
   return $schema;
+}
+
+
+
+function modelreview_update_6100() {
+  $sql = "UPDATE {modelreview_actiondesc} SET statusid = (statusid * 10)";
+  $query1 = db_query($sql);
+
+  $sql = "UPDATE {modelreview_action} SET statusid = (statusid * 10)";
+  $query2 = db_query($sql);
+  
 }
 

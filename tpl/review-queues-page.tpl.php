@@ -3,7 +3,7 @@
  * @file review-queues-page.tpl.php
  * Template for displaying Model Review status to Model Authors.
  *
- * - $review: an array of keyed values. It contains:
+ * - Variables available:
  *
  *   - $model_nid:        NID for model being Reviewed
  *   - $modelversion_nid: NID of current Model Version node

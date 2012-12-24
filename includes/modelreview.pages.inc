@@ -418,8 +418,6 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
   $reviews = db_query($sql, array(':nid' => $review['model_nid']));
   // after we add our editor action, we will need to update these review actions to point (via 'related') to our new editor action
 
-  // TODO: Are we using $reviews ?
-
   // determine the status id that will need to be recorded here.
   switch ($form_state['values']['decision']) {
     case 0:
@@ -488,7 +486,9 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
       break;
   }
 
-  notifications_lite_send($author, $subject, $body);
+  if (variable_get('modelreview_emails_enabled', 0) == 1) {
+    notifications_lite_send($author, $subject, $body);
+  }
 
   drupal_goto('model/' . $modelnid . '/review/status'); 
 
@@ -562,8 +562,10 @@ function modelreview_requestrereview_form_submit($form, &$form_state) {
   $title = $row->title;
 
   $subject = "Your Model Review Case requires a Re-Review";
-  $body = 'A model you have reviewed., "' . $title . '," has been revised by the author, and the author has requested a re-review of their case to determine if the model now meets the requirements for certification. You may access this review case by visiting: ' . l($base_url . $base_path . "model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
-  notifications_lite_send($reviewer, $subject, $body);
+  $body = 'A model you have reviewed., "'. $title .'," has been revised by the author, and the author has requested a re-review of their case to determine if the model now meets the requirements for certification. You may access this review case by visiting: '. l($base_url . $base_path ."model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
+  if (variable_get('modelreview_emails_enabled', 0) == 1) {
+    notifications_lite_send($reviewer, $subject, $body);
+  }
 
   // notify Editors of the Re-review Request
   $subject = "Model Re-Review has been requested";
@@ -575,7 +577,9 @@ function modelreview_requestrereview_form_submit($form, &$form_state) {
   $result = db_query($query, array(':perm' => 'edit review'));
 
   foreach ($result as $index => $record) 
-    notifications_lite_send($record->uid, $subject, $body);
+    if (variable_get('modelreview_emails_enabled', 0) == 1) {
+      notifications_lite_send($record->uid, $subject, $body);
+    }
 
   // transfer user to Review form
   drupal_goto('model/' . $modelnid . '/review/status');

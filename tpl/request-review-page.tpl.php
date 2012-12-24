@@ -3,8 +3,8 @@
  * @file request-review-page.tpl.php
  * Template for Model Authors to request a Review.
  *
- * - $review: an array of keyed values. It contains:
- *   - $review['model_nid']:        NID for model being Reviewed
+ * - Variables available:
+ *   - $model_nid:        NID for model being Reviewed
  *
  * This template is based off the Zen Node template. Some code may be unneeded at this
  * time based on the features that have been implemented for Model Reviews, but that

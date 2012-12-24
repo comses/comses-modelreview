@@ -43,6 +43,21 @@ function modelreview_init() {
 }
 
 /**
+ * Implementation of hook_views_api().
+ *
+ * This tells drupal that there is Views integration file named 
+ * modelreview.views.inc 
+ */
+function modelreview_views_api() {
+  // Note that you can include 'path' in this array so that your views.inc 
+  // file can be stored in a different location.
+  return array(
+    'api' => 2.0,
+    'path' => drupal_get_path('module', 'modelreview') .'/includes',
+  );
+}
+
+/**
  * Implementation of hook_theme()
  * 
  */
@@ -129,8 +144,7 @@ function modelreview_menu() {
     'description' => "",
     'page callback' => 'modelreview_goto_status',
     'page arguments' => array(array(1)),
-    #'access callback' => 'modelreview_access_content',
-    'access callback' => TRUE,
+    'access callback' => '_modelreview_access_content',
     'access arguments' => array(array('edit review', 'review model', 'edit any model', 'edit own model')),
     'type' => MENU_CALLBACK,
   );
@@ -140,9 +154,8 @@ function modelreview_menu() {
     'description' => "",
     'page callback' => 'modelreview_status_page',
     'page arguments' => array(array(1, 4)),
-    'access callback' => TRUE,
-    #'access callback' => 'modelreview_access_content',
-    #'access arguments' => array(array('edit any model', 'edit own model')),
+    'access callback' => '_modelreview_access_content',
+    'access arguments' => array(array('edit any model', 'edit own model')),
     'type' => MENU_LOCAL_TASK,
     'weight' => 1,
   );
@@ -152,9 +165,8 @@ function modelreview_menu() {
     'description' => "",
     'page callback' => 'modelreview_status_page',
     'page arguments' => array(array(1, 4)),
-    'access callback' => TRUE,
-    #'access callback' => 'modelreview_access_content',
-    #'access arguments' => array(array('edit review')),
+    'access callback' => '_modelreview_access_content',
+    'access arguments' => array(array('edit review')),
     'type' => MENU_LOCAL_TASK,
     'weight' => 2,
   );
@@ -175,10 +187,9 @@ function modelreview_menu() {
   $items['model/%/review/info'] = array(
     'title' => 'Request A Model Review',
     'description' => "",
-    'page callback' => 'modelreview_request_page',
-    'access callback' => TRUE,
-    #'access callback' => 'modelreview_access_content',
-    #'access arguments' => array(array('edit any model', 'edit own model')),
+    'page callback' => '_modelreview_request_page',
+    'access callback' => '_modelreview_access_content',
+    'access arguments' => array(array('edit any model', 'edit own model')),
     'type' => MENU_CALLBACK,
   );
   
@@ -187,11 +198,19 @@ function modelreview_menu() {
     'description' => "",
     'page callback' => 'modelreview_queues_page',
     //'page arguments' => array(array(1, 4)),
-    'access callback' => TRUE,
-    #'access callback' => 'modelreview_access_content',
-    #'access arguments' => array(array('edit review', 'review model')),
+    'access callback' => '_modelreview_access_content',
+    'access arguments' => array(array('edit review', 'review model')),
     'type' => MENU_LOCAL_TASK,
     'weight' => 10,
+  );
+
+  $items['admin/settings/modelreview'] = array(
+    'title' => 'Model Reviews Settings',
+    'description' => "Configuration settings for Model Reviews",
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_modelreview_admin_settings'),
+    'access arguments' => array('administer model reviews'),
+    'type' => MENU_NORMAL_ITEM,
   );
 
   return $items;
@@ -204,6 +223,8 @@ function modelreview_permission() {
   return array(
     'review model',
     'edit review',
+    'manage review',
+    'administer model reviews',
   );
 }
 
@@ -213,7 +234,7 @@ function modelreview_permission() {
 function modelreview_access_content($perms) {
 
   // if author access requested
-  if (in_array('edit any model', $perms) || in_array('edit own model', $perms)) {
+  if (in_array('edit own model', $perms)) {
     global $user;
     $modelnid = arg(1);
 
@@ -222,7 +243,7 @@ function modelreview_access_content($perms) {
     $row = $result->fetchObject();
 
     $author = $row->uid;
-    $author_access = (($user->uid == 1) || user_access('edit any model') || (user_access('edit own model') && $user->uid == $author));
+    $author_access = (($user->uid == 1) || (user_access('edit own model') && $user->uid == $author));
   }
 
   // if editor access requested
@@ -244,13 +265,7 @@ function modelreview_access_content($perms) {
   return ($author_access || $editor_access || $reviewer_access);
 }
 
-function modelreview_debug_request() {
-  $modelnid = arg(1);
-
-  drupal_goto('model/' . $modelnid . '/review/status/author');
-}
-
-function modelreview_request_page() {
+function _modelreview_request_page() {
   return theme('request_review_page', array( 
         'model_nid' => $modelnid, 
       ));
@@ -427,3 +442,27 @@ function modelreview_queues_page() {
 
   return $content;
 }
+
+/**
+ * Admin settings page
+ */
+function _modelreview_admin_settings() {
+  $form = array();
+
+  $form['notifications'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Email Notifications'),
+    '#collapsible' => FALSE, 
+    '#collapsed' => FALSE,
+  );
+
+  $form['notifications']['modelreview_emails_enabled'] = array(
+    '#type' => 'radios', 
+    '#title' => t('Enable/Disable Notifications'), 
+    '#default_value' => variable_get('modelreview_emails_enabled', 0), 
+    '#options' => array(t('Disabled'), t('Enabled')),
+  );
+
+  return system_settings_form($form);
+}
+

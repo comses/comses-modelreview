@@ -3,7 +3,7 @@
  * @file reviewer-status-page.tpl.php
  * Template for displaying Model Review status for Model Authors.
  *
- * - $review: an array of keyed values. It contains:
+ * - Variables available:
  *
  *   - $model_nid:        NID for model being Reviewed
  *   - $modelversion_nid: NID of current Model Version node
@@ -181,10 +181,12 @@ $title = $row->title;
           print '    </div>';
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Other Review Notes</div>';
-          print '      <div class="modelreview-field">';
-          print '        <div class="modelreview-label">Other Notes:</div>';
-          print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
-          print '      </div>';
+          if (!empty($review_row->other_notes)) {
+            print '      <div class="modelreview-field">';
+            print '        <div class="modelreview-label">Other Notes:</div>';
+            print '        <div class="modelreview-textvalue">'. $review_row->other_notes .'</div>';
+            print '      </div>';
+          }
           print '      <div class="modelreview-field">';
           print '        <div class="modelreview-label">Notes to the Editor:</div>';
           print '        <div class="modelreview-textvalue">'. $review_row->editor_notes .'</div>';
