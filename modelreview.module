@@ -198,7 +198,7 @@ function modelreview_menu() {
     'page callback' => 'modelreview_queues_page',
     //'page arguments' => array(array(1, 4)),
     'access callback' => 'modelreview_access_content',
-    'access arguments' => array(array('edit review', 'review model')),
+    'access arguments' => array(array('edit review', 'manage review', 'review model')),
     'type' => MENU_LOCAL_TASK,
     'weight' => 10,
   );
@@ -279,7 +279,7 @@ function modelreview_access_content($perms) {
 
 function modelreview_request_page() {
   return theme('request_review_page', array( 
-        'model_nid' => $modelnid, 
+        'model_nid' => arg(1), 
       ));
 }
 
@@ -301,17 +301,15 @@ function modelreview_goto_status() {
   $author = $row->uid;
 
   // Lookup Review for Assigned Reviewer
-  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, mra.statusdate, mra.reviewer, "
-       . "reviewer_firstname.field_prfl_firstname_value as firstname, reviewer_lastname.field_prfl_lastname_value as lastname "
+  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mra.statusdate, mra.reviewer "
        . "FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 20 "
-       . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid "
-       . "LEFT JOIN {users} reviewer ON mra.reviewer = reviewer.uid "
-       . "LEFT JOIN {field_data_field_prfl_firstname} reviewer_firstname ON reviewer.uid = reviewer_firstname.entity_id "
-       . "LEFT JOIN {field_data_field_prfl_lastname} reviewer_lastname ON reviewer.uid = reviewer_lastname.entity_id "
        . "WHERE mr.model_nid = :nid";
   $result = db_query($sql, array(':nid' => $modelnid));
   $row = $result->fetchObject();
-  $reviewer = $row->lastname;
+  if (isset($row->reviewer))
+    $reviewer = $row->reviewer;
+  else
+    $reviewer = NULL;
 
   // set mode according to rules:
   // 1. If user owns model being viewed, use Author mode.
@@ -375,15 +373,19 @@ function modelreview_status_page() {
   // Lookup Review for Assigned Reviewer
   $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, mra.statusdate, mra.reviewer, "
        . "reviewer_firstname.field_prfl_firstname_value as firstname, reviewer_lastname.field_prfl_lastname_value as lastname "
-       . "FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 20 "
-       . "INNER JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
-       . "LEFT JOIN users reviewer ON mra.reviewer = reviewer.uid "
-       . "LEFT JOIN field_data_field_prfl_firstname reviewer_firstname ON reviewer.uid = reviewer_firstname.entity_id "
-       . "LEFT JOIN field_data_field_prfl_lastname reviewer_lastname ON reviewer.uid = reviewer_lastname.entity_id "
+       . "FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 20 "
+       . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid "
+       . "LEFT JOIN {users} reviewer ON mra.reviewer = reviewer.uid "
+       . "LEFT JOIN {profile} p ON reviewer.uid = p.uid AND p.type = 'main' "
+       . "LEFT JOIN field_data_field_prfl_firstname reviewer_firstname ON p.pid = reviewer_firstname.entity_id "
+       . "LEFT JOIN field_data_field_prfl_lastname reviewer_lastname ON p.pid = reviewer_lastname.entity_id "
        . "WHERE mr.model_nid = :nid";
   $result = db_query($sql, array(':nid' => $modelnid));
   $row = $result->fetchObject();
-  $reviewer = $row->lastname;
+  if (isset($row->lastname))
+    $reviewer = $row->firstname . ' ' . $row->lastname;
+  else
+    $reviewer = NULL;
 
   $usermode = arg(4); // view status page in this mode (Author, Editor, or Reviewer)
 

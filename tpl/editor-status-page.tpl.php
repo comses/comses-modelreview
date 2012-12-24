@@ -61,7 +61,7 @@
 
       print '  <div class="modelreview-section">';
       print '    <div class="modelreview-section-head">Assign Reviewer</div>';
-      print drupal_get_form('modelreview_assignreviewer_form');
+      print drupal_render(drupal_get_form('modelreview_assignreviewer_form'));
       print '  </div>';
 
       break;
@@ -264,7 +264,7 @@
 
       print '  <div class="modelreview-section">';
       print '    <div class="modelreview-section-head">Process Review</div>';
-      print drupal_get_form('modelreview_editor_process_form');
+      print drupal_render(drupal_get_form('modelreview_editor_process_form'));
       print '  </div>';
       break;
 

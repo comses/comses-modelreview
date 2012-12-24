@@ -30,7 +30,7 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
   // Otherwise redirect to Status page with error about an open case already present.
   $sql = "SELECT COUNT(*) FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid WHERE mr.model_nid = :nid AND mra.statusid < 60;";
   $result = db_query($sql, array(':nid' => $modelnid));
-  $review_count = db_result($result);
+  $review_count = $result->fetchField();
 
   if ($review_count > 0) {
     // An open review case already exists
@@ -39,17 +39,13 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
   } 
   else {
     // Insert new 'modelreview' record
-    $review_record = array(
-      'rid' => NULL,
-      'sid' => 0,
-      'model_nid' => $modelnid,
-    );
-    drupal_write_record('modelreview', $review_record);
-
-    // now lookup the rid for the new 'modelreview' record
-    $sql = "SELECT mr.rid FROM {modelreview} mr WHERE mr.model_nid = :nid ORDER BY mr.rid DESC;";
-    $result = db_query_range($sql, 0, 1, array(':nid' => $modelnid));
-    $review_id = db_result($result);
+    $review_id = db_insert('modelreview')
+               ->fields(array(
+                   'sid' => 0,
+                   'model_nid' => $modelnid,
+                 ))
+               ->execute();
+    watchdog('modelreview', 'New review requested. RID: %rid', array('%rid' => $review_id,), WATCHDOG_INFO);
 
     // get the node id for the latest modelversion
     $query = "SELECT node.nid FROM {node} node "                              
@@ -62,30 +58,29 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
     $modelversion_nid = db_query_range($query, 0, 1, array(':nid' => $modelnid))->fetchField();
 
     // Insert new 'modelreview_action' record
-    $action_record = array(
-      'rid' => $review_id,
-      'modelversion_nid' => $modelversion_nid,
-      'statusid' => 10,
-      'statusdate' => REQUEST_TIME,
-    );
-    drupal_write_record('modelreview_action', $action_record);
+    $action_sid = db_insert('modelreview_action')
+                ->fields(array(
+                    'rid' => $review_id,
+                    'modelversion_nid' => $modelversion_nid,
+                    'statusid' => 10,
+                    'statusdate' => REQUEST_TIME,
+                  ))
+                ->execute();
+    watchdog('modelreview', 'New review action posted. SID: %sid', array('%sid' => $action_sid,), WATCHDOG_INFO);
 
     // now update 'modelreview' record with action sid
-    $sql = "SELECT mra.sid FROM {modelreview_action} mra WHERE mra.rid = :rid ORDER BY mra.statusdate DESC;";
-    $result = db_query_range($sql, 0, 1, array(':rid' => $review_id));
-    $review_sid = db_result($result);
-
-    $review_record = array(
-      'rid' => $review_id,
-      'sid' => $review_sid,
-    );
-    drupal_write_record('modelreview', $review_record, 'rid');
+    $num_updated = db_update('modelreview')
+                 ->fields(array(
+                     'sid' => $action_sid,
+                   ))
+                 ->condition('rid', $review_id, '=')
+                 ->execute();
 
     // notify all Editors
     // lookup model node
     $sql = "SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = :nid";
     $result = db_query($sql, array(':nid' => $modelnid));
-    $row = db_fetch_object($result);
+    $row = $result->fetchObject();
     $title = $row->title;
 
     $subject = "Model Review has been requested";
@@ -94,7 +89,7 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
     $query = 'SELECT u.uid FROM {users} u LEFT JOIN {users_roles} ur ON u.uid = ur.uid '
            . 'LEFT JOIN {role_permission} rp ON ur.rid = rp.rid '
            . 'WHERE rp.permission = :perm';
-    $result = db_query($query, array(':perm' => 'edit review'));
+    $result = db_query($query, array(':perm' => 'manage review'));
 
     foreach ($result as $index => $record) 
       if (variable_get('modelreview_emails_enabled', 0) == 1) {
@@ -110,15 +105,20 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
  */
 function modelreview_assignreviewer_form() {
   $options[NULL] = '';
-  $query = "SELECT u.uid FROM {users} u LEFT JOIN {users_roles} ur ON u.uid = ur.uid "
+  $query = "SELECT u.uid, reviewer_firstname.field_prfl_firstname_value as firstname, "
+         . "reviewer_lastname.field_prfl_lastname_value as lastname FROM {users} u LEFT JOIN {users_roles} ur ON u.uid = ur.uid "
+         . "LEFT JOIN {profile} p ON u.uid = p.uid AND p.type = 'main' "
          . "LEFT JOIN {role_permission} rp ON ur.rid = rp.rid "
-         . "LEFT JOIN {field_data_field_prfl_firstname} reviewer_firstname ON u.uid = reviewer_firstname.entity_id "
-         . "LEFT JOIN {field_data_field_prfl_lastname} reviewer_lastname ON u.uid = reviewer_lastname.entity_id "
+         . "LEFT JOIN {field_data_field_prfl_firstname} reviewer_firstname ON p.pid = reviewer_firstname.entity_id "
+         . "LEFT JOIN {field_data_field_prfl_lastname} reviewer_lastname ON p.pid = reviewer_lastname.entity_id "
          . "WHERE rp.permission = :perm";
   $result = db_query($query, array(':perm' => 'review model'));
 
-  foreach ($result as $index => $record) 
-    $options[$index] = substr($record->firstname, 0, 1) . ' ' . $record->lastname;
+  foreach ($result as $index => $record) {
+    // don't include user 1 (system maintenance account)
+    if ($record->uid > 1)
+      $options[$record->uid] = substr($record->firstname, 0, 1) . ' ' . $record->lastname;
+  }
 
   $form['model_nid'] = array(
     '#type' => 'hidden',
@@ -163,25 +163,24 @@ function modelreview_assignreviewer_form_submit($form, &$form_state) {
   $modelversion_nid = db_query_range($query, 0, 1, array(':nid' => $modelnid))->fetchField();
 
   // Insert new 'modelreview_action' record
-  $action_record = array(
-    'rid' => $review_id,
-    'modelversion_nid' => $modelversion_nid,
-    'reviewer' => $form_state['values']['reviewer'],
-    'statusid' => 20,
-    'statusdate' => REQUEST_TIME,
-  );
-  drupal_write_record('modelreview_action', $action_record);
+  $action_sid = db_insert('modelreview_action')
+              ->fields(array(
+                  'rid' => $review_id,
+                  'modelversion_nid' => $modelversion_nid,
+                  'reviewer' => $form_state['values']['reviewer'],
+                  'statusid' => 20,
+                  'statusdate' => REQUEST_TIME,
+                ))
+              ->execute();
+  watchdog('modelreview', 'Reviewer assigned to Model Review case. UID: %reviewer', array('%reviewer' => $form_state['values']['reviewer'],), WATCHDOG_INFO);
 
   // now update 'modelreview' record with action sid
-  $sql = "SELECT mra.sid FROM {modelreview_action} mra WHERE mra.rid = :rid ORDER BY mra.statusdate DESC;";
-  $result = db_query_range($sql, 0, 1, array(':rid' => $review_id));
-  $review_sid = $result->fetchField(0);
-
-  $review_record = array(
-    'rid' => $review_id,
-    'sid' => $review_sid,
-  );
-  drupal_write_record('modelreview', $review_record, 'rid');
+  $num_updated = db_update('modelreview')
+               ->fields(array(
+                   'sid' => $action_sid,
+                 ))
+               ->condition('rid', $review_id, '=')
+               ->execute();
 
   // notify the Assigned Reviewer
   // lookup model node
@@ -293,7 +292,7 @@ function modelreview_review_form_submit($form, &$form_state) {
   global $user;
   $modelnid = $form_state['values']['model_nid'];
 
-  // get the node id for the latest modelversion, using Views
+  // get the node id for the latest modelversion
   $query = "SELECT node.nid FROM {node} node "                              
          . "LEFT JOIN {field_data_field_modelversion_modelnid} modelversion_modelnid "
          . "ON node.nid = modelversion_modelnid.entity_id AND (modelversion_modelnid.entity_type = 'node'AND modelversion_modelnid.deleted = '0') "
@@ -304,34 +303,33 @@ function modelreview_review_form_submit($form, &$form_state) {
   $modelversion_nid = db_query_range($query, 0, 1, array(':nid' => $modelnid))->fetchField();
 
   // Insert new 'modelreview_action' record
-  $action_record = array(
-    'rid' => $form_state['values']['rid'],
-    'modelversion_nid' => $modelversion_nid,
-    'reviewer' => $form_state['values']['reviewer'],
-    'statusid' => 30,
-    'statusdate' => REQUEST_TIME,
-    'code_clean' => $form_state['values']['code_clean'],
-    'code_commented' => $form_state['values']['code_commented'],
-    'model_documented' => $form_state['values']['model_documented'],
-    'model_runs' => $form_state['values']['model_runs'],
-    'code_notes' => $form_state['values']['code_notes'],
-    'doc_notes' => $form_state['values']['doc_notes'],
-    'other_notes' => $form_state['values']['other_notes'],
-    'editor_notes' => $form_state['values']['editor_notes'],
-    'recommendation' => $form_state['values']['recommendation'],
-  );
-  drupal_write_record('modelreview_action', $action_record);
+  $action_sid = db_insert('modelreview_action')
+              ->fields(array(
+                  'rid' => $form_state['values']['rid'],
+                  'modelversion_nid' => $modelversion_nid,
+                  'reviewer' => $form_state['values']['reviewer'],
+                  'statusid' => 30,
+                  'statusdate' => REQUEST_TIME,
+                  'code_clean' => $form_state['values']['code_clean'],
+                  'code_commented' => $form_state['values']['code_commented'],
+                  'model_documented' => $form_state['values']['model_documented'],
+                  'model_runs' => $form_state['values']['model_runs'],
+                  'code_notes' => $form_state['values']['code_notes'],
+                  'doc_notes' => $form_state['values']['doc_notes'],
+                  'other_notes' => $form_state['values']['other_notes'],
+                  'editor_notes' => $form_state['values']['editor_notes'],
+                  'recommendation' => $form_state['values']['recommendation'],
+                ))
+              ->execute();
+  watchdog('modelreview', 'Review completed for Model Review case. RID: %rid', array('%rid' => $form_state['values']['rid'],), WATCHDOG_INFO);
 
   // now update 'modelreview' record with action sid
-  $sql = "SELECT mra.sid FROM {modelreview_action} mra WHERE mra.rid = :rid ORDER BY mra.statusdate DESC;";
-  $result = db_query_range($sql, 0, 1, array(':rid' => $form_state['values']['rid']));
-  $review_sid = $result->fetchField(0);
-
-  $review_record = array(
-    'rid' => $form_state['values']['rid'],
-    'sid' => $review_sid,
-  );
-  drupal_write_record('modelreview', $review_record, 'rid');
+  $num_updated = db_update('modelreview')
+               ->fields(array(
+                   'sid' => $action_sid,
+                 ))
+               ->condition('rid', $form_state['values']['rid'], '=')
+               ->execute();
 
   // notify all Editors
   // lookup model node
@@ -346,7 +344,7 @@ function modelreview_review_form_submit($form, &$form_state) {
   $query = 'SELECT u.uid FROM {users} u LEFT JOIN {users_roles} ur ON u.uid = ur.uid '
          . 'LEFT JOIN {role_permission} rp ON ur.rid = rp.rid '
          . 'WHERE rp.permission = :perm';
-  $result = db_query($query, array(':perm' => 'edit review'));
+  $result = db_query($query, array(':perm' => 'manage review'));
 
   foreach ($result as $index => $record) 
     if (variable_get('modelreview_emails_enabled', 0) == 1) {
@@ -421,7 +419,7 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
   $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate "
        . "FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 30 "
        . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = :nid AND related = NULL";
-  $reviews = db_query($sql, array(':nid' => $review['model_nid']));
+  $reviews = db_query($sql, array(':nid' => $modelnid));
   // after we add our editor action, we will need to update these review actions to point (via 'related') to our new editor action
 
   // determine the status id that will need to be recorded here.
@@ -440,26 +438,25 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
   }
 
   // Insert new 'modelreview_action' record
-  $action_record = array(
-    'rid' => $review_id,
-    'modelversion_nid' => $modelversion_nid,
-    'reviewer' => $reviewer,
-    'statusid' => $step,
-    'statusdate' => REQUEST_TIME,
-    'editor_notes' => $form_state['values']['editor_notes'],
-  );
-  drupal_write_record('modelreview_action', $action_record);
+  $action_sid = db_insert('modelreview_action')
+              ->fields(array(
+                  'rid' => $review_id,
+                  'modelversion_nid' => $modelversion_nid,
+                  'reviewer' => $reviewer,
+                  'statusid' => $step,
+                  'statusdate' => REQUEST_TIME,
+                  'editor_notes' => $form_state['values']['editor_notes'],
+                ))
+              ->execute();
+  watchdog('modelreview', 'An editor has processed a Model Review Case.', NULL, WATCHDOG_INFO);
 
   // now update 'modelreview' record with action sid
-  $sql = "SELECT mra.sid FROM {modelreview_action} mra WHERE mra.rid = :nid ORDER BY mra.statusdate DESC;";
-  $result = db_query_range($sql, 0, 1, array(':nid' => $review_id));
-  $action_sid = $result->fetchField(0);
-
-  $review_record = array(
-    'rid' => $review_id,
-    'sid' => $action_sid,
-  );
-  drupal_write_record('modelreview', $review_record, 'rid');
+  $num_updated = db_update('modelreview')
+               ->fields(array(
+                   'sid' => $action_sid,
+                 ))
+               ->condition('rid', $review_id, '=')
+               ->execute();
 
   // and update any related review actions with the sid of the new editor action we just created
   $sql = "UPDATE {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 30 "
@@ -469,7 +466,7 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
   // Lookup the Model author
   // lookup model node
   $sql = "SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = :nid";
-  $result = db_query($sql, $modelnid);
+  $result = db_query($sql, array(':nid' => $modelnid));
   $row = $result->fetchObject();
   $title = $row->title;
   $author = $row->uid;
@@ -540,25 +537,24 @@ function modelreview_requestrereview_form_submit($form, &$form_state) {
   $modelversion_nid = db_query_range($query, 0, 1, array(':nid' => $modelnid))->fetchField();
 
   // Insert new 'modelreview_action' record
-  $action_record = array(
-    'rid' => $review_id,
-    'modelversion_nid' => $modelversion_nid,
-    'reviewer' => $reviewer,
-    'statusid' => 50,
-    'statusdate' => REQUEST_TIME,
-  );
-  drupal_write_record('modelreview_action', $action_record);
+  $action_sid = db_insert('modelreview_action')
+              ->fields(array(
+                  'rid' => $review_id,
+                  'modelversion_nid' => $modelversion_nid,
+                  'reviewer' => $reviewer,
+                  'statusid' => 50,
+                  'statusdate' => REQUEST_TIME,
+                ))
+              ->execute();
+  watchdog('modelreview', 'Model author has requested a re-revew of their Model Review case.', NULL,  WATCHDOG_INFO);
 
   // now update 'modelreview' record with action sid
-  $sql = "SELECT mra.sid FROM {modelreview_action} mra WHERE mra.rid = :rid ORDER BY mra.statusdate DESC;";
-  $result = db_query_range($sql, 0, 1, array(':rid' => $review_id));
-  $review_sid = $result->fetchField(0);
-
-  $review_record = array(
-    'rid' => $review_id,
-    'sid' => $review_sid,
-  );
-  drupal_write_record('modelreview', $review_record, 'rid');
+  $num_updated = db_update('modelreview')
+               ->fields(array(
+                   'sid' => $action_sid,
+                 ))
+               ->condition('rid', $review_id, '=')
+               ->execute();
 
   // notify the Assigned Reviewer
   // lookup model node
@@ -573,14 +569,14 @@ function modelreview_requestrereview_form_submit($form, &$form_state) {
     notifications_lite_send($reviewer, $subject, $body);
   }
 
-  // notify Editors of the Re-review Request
+  // notify managing editor of the Re-review Request
   $subject = "Model Re-Review has been requested";
   $body = 'The author of the model, "' . $title . '", has completed requested revisions and has requested a Re-Review of their model. The assigned Reviewer has been notified that they need to complete the Re-Review. You may access this case by visiting: ' . l($base_url . $base_path . "model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
 
   $query = 'SELECT u.uid FROM {users} u LEFT JOIN {users_roles} ur ON u.uid = ur.uid '
          . 'LEFT JOIN {role_permission} rp ON ur.rid = rp.rid '
          . 'WHERE rp.permission = :perm';
-  $result = db_query($query, array(':perm' => 'edit review'));
+  $result = db_query($query, array(':perm' => 'manage review'));
 
   foreach ($result as $index => $record) 
     if (variable_get('modelreview_emails_enabled', 0) == 1) {

@@ -179,7 +179,7 @@
         }
       }
 
-      print '    <div class="modelreview-instructions status-section">'. drupal_get_form(modelreview_requestrereview_form) .'</div>';
+      print '    <div class="modelreview-instructions status-section">'. drupal_render(drupal_get_form('modelreview_requestrereview_form')) .'</div>';
 
       break;
 
