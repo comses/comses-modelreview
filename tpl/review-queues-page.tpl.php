@@ -5,14 +5,14 @@
  *
  * - $review: an array of keyed values. It contains:
  *
- *   - $review['model_nid']:        NID for model being Reviewed
- *   - $review['modelversion_nid']: NID of current Model Version node
- *   - $review['rid']:              ID of this model review
- *   - $review['sid']:              ID of the latest review action ("Step") posted 
- *   - $review['statusid']:         Status ID of the latest review action
- *   - $review['statusdate']:       Datetime (Unix) of the latest review action
- *   - $review['status']:           Text of action status
- *   - $review['reviewer']:         UID of Reviewer assigned to case
+ *   - $model_nid:        NID for model being Reviewed
+ *   - $modelversion_nid: NID of current Model Version node
+ *   - $rid:              ID of this model review
+ *   - $sid:              ID of the latest review action ("Step") posted 
+ *   - $statusid:         Status ID of the latest review action
+ *   - $statusdate:       Datetime (Unix) of the latest review action
+ *   - $status:           Text of action status
+ *   - $reviewer:         UID of Reviewer assigned to case
  *
  * This template is based off the Zen Node template. Some code may be unneeded at this
  * time based on the features that have been implemented for Model Reviews, but that

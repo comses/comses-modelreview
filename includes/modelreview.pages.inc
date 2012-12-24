@@ -228,7 +228,6 @@ function modelreview_review_form() {
     '#type' => 'hidden',
     '#value' => $row->reviewer,
   );
-
   $form['code_clean'] = array(
     '#type' => 'select',
     '#title' => t('Is the Code Clean/Well-written?'),
@@ -243,7 +242,6 @@ function modelreview_review_form() {
     '#type' => 'textarea',
     '#title' => t('Code Notes'),
   );
-
   $form['model_documented'] = array(
     '#type' => 'select',
     '#title' => t('Is the Model Documented Properly?'),
@@ -253,7 +251,6 @@ function modelreview_review_form() {
     '#type' => 'textarea',
     '#title' => t('Documentation Notes'),
   );
-
   $form['model_runs'] = array(
     '#type' => 'select',
     '#title' => t('Does the Model Run with the Provided Instructions?'),
@@ -263,12 +260,10 @@ function modelreview_review_form() {
     '#type' => 'textarea',
     '#title' => t('Comments on Running the Model'),
   );
-
   $form['other_notes'] = array(
     '#type' => 'textarea',
     '#title' => t('Other Notes About Model'),
   );
-
   $form['recommendation'] = array(
     '#type' => 'select',
     '#title' => t('Your Recommendation'),

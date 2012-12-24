@@ -50,77 +50,67 @@ function modelreview_theme() {
   return array(
     'author_status_page' => array(
       'variables' => array(
-        'review' => array(
-          'model_nid' => NULL,
-          'modelversion_nid' => NULL,
-          'rid' => NULL,
-          'sid' => NULL,
-          'related' => NULL,
-          'statusid' => NULL,
-          'statusdate' => NULL,
-          'status' => NULL,
-          'reviewer' => NULL,
-        ),
+        'model_nid' => NULL,
+        'modelversion_nid' => NULL,
+        'rid' => NULL,
+        'sid' => NULL,
+        'related' => NULL,
+        'statusid' => NULL,
+        'statusdate' => NULL,
+        'status' => NULL,
+        'reviewer' => NULL,
       ),
       'template' => 'author-status-page',
       'path' => drupal_get_path('module', 'modelreview') . '/tpl',
     ),
     'editor_status_page' => array(
       'variables' => array(
-        'review' => array(
-          'model_nid' => NULL,
-          'modelversion_nid' => NULL,
-          'rid' => NULL,
-          'sid' => NULL,
-          'related' => NULL,
-          'statusid' => NULL,
-          'statusdate' => NULL,
-          'status' => NULL,
-          'reviewer' => NULL,
-        ),
+        'model_nid' => NULL,
+        'modelversion_nid' => NULL,
+        'rid' => NULL,
+        'sid' => NULL,
+        'related' => NULL,
+        'statusid' => NULL,
+        'statusdate' => NULL,
+        'status' => NULL,
+        'reviewer' => NULL,
       ),
       'template' => 'editor-status-page',
       'path' => drupal_get_path('module', 'modelreview') . '/tpl',
     ),
     'reviewer_status_page' => array(
       'variables' => array(
-        'review' => array(
-          'model_nid' => NULL,
-          'modelversion_nid' => NULL,
-          'rid' => NULL,
-          'sid' => NULL,
-          'related' => NULL,
-          'statusid' => NULL,
-          'statusdate' => NULL,
-          'status' => NULL,
-          'reviewer' => NULL,
-        ),
+        'model_nid' => NULL,
+        'modelversion_nid' => NULL,
+        'rid' => NULL,
+        'sid' => NULL,
+        'related' => NULL,
+        'statusid' => NULL,
+        'statusdate' => NULL,
+        'status' => NULL,
+        'reviewer' => NULL,
       ),
       'template' => 'reviewer-status-page',
       'path' => drupal_get_path('module', 'modelreview') . '/tpl',
     ),
     'request_review_page' => array(
       'variables' => array(
-        'review' => array(
-          'model_nid' => NULL,
-        ),
+        'model_nid' => NULL,
       ),
       'template' => 'request-review-page',
       'path' => drupal_get_path('module', 'modelreview') . '/tpl',
     ),
     'review_queues_page' => array(
       'variables' => array(
-        'review' => array(
-          'model_nid' => NULL,
-          'modelversion_nid' => NULL,
-          'rid' => NULL,
-          'sid' => NULL,
-          'related' => NULL,
-          'statusid' => NULL,
-          'statusdate' => NULL,
-          'status' => NULL,
-          'reviewer' => NULL,
-        ),
+        'model_nid' => NULL,
+        'modelversion_nid' => NULL,
+        'rid' => NULL,
+        'sid' => NULL,
+        'related' => NULL,
+        'statusid' => NULL,
+        'statusdate' => NULL,
+        'status' => NULL,
+        'reviewer' => NULL,
       ),
       'template' => 'review-queues-page',
       'path' => drupal_get_path('module', 'modelreview') . '/tpl',
@@ -374,8 +364,6 @@ function modelreview_status_page() {
   $sql = "SELECT mr.rid, mr.sid, mr.model_nid, modelversion_nid, related, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = :nid";
   $result = db_query($sql, array(':nid' => $modelnid));
   $row = $result->fetchObject();
-
-  dpm($row);
 
   switch ($usermode) {
     case 'author':
