@@ -97,7 +97,9 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
     $result = db_query($query, array(':perm' => 'edit review'));
 
     foreach ($result as $index => $record) 
-      notifications_lite_send($record->uid, $subject, $body);
+      if (variable_get('modelreview_emails_enabled', 0) == 1) {
+        notifications_lite_send($record->uid, $subject, $body);
+      }
 
     drupal_goto('model/' . $modelnid . '/review/status');
   }
@@ -190,7 +192,9 @@ function modelreview_assignreviewer_form_submit($form, &$form_state) {
 
   $subject = "You have been assigned a new Model Review case";
   $body = 'You have been assigned a new Model Review case for the model, "' . $title . '". You may access this review case by visiting: ' . l($base_url . $base_path . "model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
-  notifications_lite_send($form_state['values']['reviewer'], $subject, $body);
+  if (variable_get('modelreview_emails_enabled', 0) == 1) {
+    notifications_lite_send($form_state['values']['reviewer'], $subject, $body);
+  }
 
   drupal_goto('model/' . $modelnid . '/review/status'); 
 }
@@ -345,7 +349,9 @@ function modelreview_review_form_submit($form, &$form_state) {
   $result = db_query($query, array(':perm' => 'edit review'));
 
   foreach ($result as $index => $record) 
-    notifications_lite_send($record->uid, $subject, $body);
+    if (variable_get('modelreview_emails_enabled', 0) == 1) {
+      notifications_lite_send($record->uid, $subject, $body);
+    }
 
   drupal_goto('model/' . $modelnid . '/review/status'); 
 }

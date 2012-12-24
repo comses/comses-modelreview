@@ -220,10 +220,21 @@ function modelreview_menu() {
  */
 function modelreview_permission() {
   return array(
-    'review model',
-    'edit review',
-    'manage review',
-    'administer model reviews',
+    'review model' => array(
+      'title' => t('Review Models: Reviewers'),
+      'description' => t('Perform review on models. Users with this permission can be assigned as a Reviewer.'),
+    ),
+    'edit review' => array(
+      'title' => t('Edit Review Cases: Review Editors'),
+      'description' => t('Process and edit review cases.'),
+    ),
+    'manage review' => array(
+      'title' => t('Manage Review Cases: Managing Editors'),
+      'description' => t('Manage editors and review cases.'),
+    ),
+    'administer model reviews' => array(
+      'title' => t('Administer Model Review Settings'),
+    ),
   );
 }
 
