@@ -231,12 +231,14 @@ function modelreview_permission() {
  * Implementation of custom access callback function
  */
 function modelreview_access_content($perms) {
+  global $user;
+  $modelnid = arg(1);
+  $author_access = FALSE;
+  $editor_access = FALSE;
+  $reviewer_access = FALSE;
 
   // if author access requested
   if (in_array('edit own model', $perms)) {
-    global $user;
-    $modelnid = arg(1);
-
     $sql = "SELECT nid, uid FROM {node} WHERE type = 'model' AND node.nid = :nid";
     $result = db_query($sql, array(':nid' => $modelnid));
     $row = $result->fetchObject();
