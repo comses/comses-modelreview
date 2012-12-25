@@ -480,3 +480,45 @@ function modelreview_admin_settings() {
   return system_settings_form($form);
 }
 
+function modelreview_test_mail() {
+  modelreview_send_mail('ndrollin@asu.edu', 'Test message subject', 'Test message body');
+}
+
+
+/**
+ * Send a simple email to specified recipient.
+ *
+ * @param string $message_subject
+ * @param string $message_body
+ */
+function modelreview_send_mail($dest_email, $message_subject, $message_body) {
+  $comses_email = 'comses.net@openabm.org';
+  
+  // These value can remain empty.
+  $module = 'modelreview';
+  $mail_token = '';
+  
+  $from = variable_get('system_mail', $comses_email);
+  $message = array(
+    'id' => $module . '_' . $mail_token,
+    'to' => $dest_email,
+    'subject' => $message_subject,
+    'body' => array($message_body),
+    'headers' => array(
+      'From' => $from,
+      'Sender' => $from,
+      'Return-Path' => $from,
+    ),
+  );
+  $system = drupal_mail_system($module, $mail_token);
+
+  // The format function must be called before calling the mail function. 
+  $message = $system->format($message);
+
+  if ($system->mail($message)) {
+    watchdog('modelreview', 'Email notification successfully sent for Model Review case.<br />Address: %email<br />Subject: %subject<br />Body: %body', array('%email' => $dest_email, '%subject' => $message_subject, '%body' => $message_body));
+  }
+  else {
+    watchdog('modelreview', 'Email notification failed. Email failed to send for Model Review case.<br />Address: %email<br />Subject: %subject<br />Body: %body', array('%email' => $dest_email, '%subject' => $message_subject, '%body' => $message_body));
+  }
+}
