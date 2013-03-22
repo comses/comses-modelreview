@@ -105,12 +105,12 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
  */
 function modelreview_assignreviewer_form() {
   $options[NULL] = '';
-  $query = "SELECT u.uid, reviewer_firstname.field_prfl_firstname_value as firstname, "
-         . "reviewer_lastname.field_prfl_lastname_value as lastname FROM {users} u LEFT JOIN {users_roles} ur ON u.uid = ur.uid "
+  $query = "SELECT u.uid, reviewer_firstname.field_profile2_firstname_value as firstname, "
+         . "reviewer_lastname.field_profile2_lastname_value as lastname FROM {users} u LEFT JOIN {users_roles} ur ON u.uid = ur.uid "
          . "LEFT JOIN {profile} p ON u.uid = p.uid AND p.type = 'main' "
          . "LEFT JOIN {role_permission} rp ON ur.rid = rp.rid "
-         . "LEFT JOIN {field_data_field_prfl_firstname} reviewer_firstname ON p.pid = reviewer_firstname.entity_id "
-         . "LEFT JOIN {field_data_field_prfl_lastname} reviewer_lastname ON p.pid = reviewer_lastname.entity_id "
+         . "LEFT JOIN {field_data_field_profile2_firstname} reviewer_firstname ON p.pid = reviewer_firstname.entity_id "
+         . "LEFT JOIN {field_data_field_profile2_lastname} reviewer_lastname ON p.pid = reviewer_lastname.entity_id "
          . "WHERE rp.permission = :perm";
   $result = db_query($query, array(':perm' => 'review model'));
 

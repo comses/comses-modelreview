@@ -372,13 +372,13 @@ function modelreview_status_page() {
 
   // Lookup Review for Assigned Reviewer
   $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, mra.statusdate, mra.reviewer, "
-       . "reviewer_firstname.field_prfl_firstname_value as firstname, reviewer_lastname.field_prfl_lastname_value as lastname "
+       . "reviewer_firstname.field_profile2_firstname_value as firstname, reviewer_lastname.field_profile2_lastname_value as lastname "
        . "FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 20 "
        . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid "
        . "LEFT JOIN {users} reviewer ON mra.reviewer = reviewer.uid "
        . "LEFT JOIN {profile} p ON reviewer.uid = p.uid AND p.type = 'main' "
-       . "LEFT JOIN field_data_field_prfl_firstname reviewer_firstname ON p.pid = reviewer_firstname.entity_id "
-       . "LEFT JOIN field_data_field_prfl_lastname reviewer_lastname ON p.pid = reviewer_lastname.entity_id "
+       . "LEFT JOIN field_data_field_profile2_firstname reviewer_firstname ON p.pid = reviewer_firstname.entity_id "
+       . "LEFT JOIN field_data_field_profile2_lastname reviewer_lastname ON p.pid = reviewer_lastname.entity_id "
        . "WHERE mr.model_nid = :nid";
   $result = db_query($sql, array(':nid' => $modelnid));
   $row = $result->fetchObject();

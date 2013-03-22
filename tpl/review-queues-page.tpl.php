@@ -67,14 +67,14 @@ if ($row = $results->fetchObject()) {
 
 <?php
 $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, statusdate, reviewer, "
-     . "reviewer_firstname.field_prfl_firstname_value as reviewer_first, "
-     . "reviewer_lastname.field_prfl_lastname_value as reviewer_last, model_node.title AS model_title "
+     . "reviewer_firstname.field_profile2_firstname_value as reviewer_first, "
+     . "reviewer_lastname.field_profile2_lastname_value as reviewer_last, model_node.title AS model_title "
      . "FROM {modelreview} mr "
      . "INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid "
      . "LEFT JOIN {users} reviewer ON mra.reviewer = reviewer.uid "
      . "LEFT JOIN {profile} profile ON reviewer.uid = profile.uid "
-     . "LEFT JOIN {field_data_field_prfl_firstname} reviewer_firstname ON profile.pid = reviewer_firstname.entity_id "
-     . "LEFT JOIN {field_data_field_prfl_lastname} reviewer_lastname ON profile.pid = reviewer_lastname.entity_id "
+     . "LEFT JOIN {field_data_field_profile2_firstname} reviewer_firstname ON profile.pid = reviewer_firstname.entity_id "
+     . "LEFT JOIN {field_data_field_profile2_lastname} reviewer_lastname ON profile.pid = reviewer_lastname.entity_id "
      . "LEFT JOIN {node} model_node ON mr.model_nid = model_node.nid "
      . "WHERE mra.statusid = 20";
 $results = db_query($sql);
@@ -121,14 +121,14 @@ if ($row = $results->fetchObject()) {
 
 <?php
 $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, statusdate, reviewer, "
-     . "reviewer_firstname.field_prfl_firstname_value as reviewer_first, "
-     . "reviewer_lastname.field_prfl_lastname_value as reviewer_last, model_node.title AS model_title "
+     . "reviewer_firstname.field_profile2_firstname_value as reviewer_first, "
+     . "reviewer_lastname.field_profile2_lastname_value as reviewer_last, model_node.title AS model_title "
      . "FROM {modelreview} mr "
      . "INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid "
      . "LEFT JOIN {users} reviewer ON mra.reviewer = reviewer.uid "
      . "LEFT JOIN {profile} profile ON reviewer.uid = profile.uid "
-     . "LEFT JOIN {field_data_field_prfl_firstname} reviewer_firstname ON profile.pid = reviewer_firstname.entity_id "
-     . "LEFT JOIN {field_data_field_prfl_lastname} reviewer_lastname ON profile.pid = reviewer_lastname.entity_id "
+     . "LEFT JOIN {field_data_field_profile2_firstname} reviewer_firstname ON profile.pid = reviewer_firstname.entity_id "
+     . "LEFT JOIN {field_data_field_profile2_lastname} reviewer_lastname ON profile.pid = reviewer_lastname.entity_id "
      . "LEFT JOIN {node} model_node ON mr.model_nid = model_node.nid "
      . "WHERE mra.statusid = 30";
 $results = db_query($sql);
@@ -175,14 +175,14 @@ if ($row = $results->fetchObject()) {
 
 <?php
 $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, statusdate, reviewer, "
-     . "reviewer_firstname.field_prfl_firstname_value as reviewer_first, "
-     . "reviewer_lastname.field_prfl_lastname_value as reviewer_last, model_node.title AS model_title "
+     . "reviewer_firstname.field_profile2_firstname_value as reviewer_first, "
+     . "reviewer_lastname.field_profile2_lastname_value as reviewer_last, model_node.title AS model_title "
      . "FROM {modelreview} mr "
      . "INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid "
      . "LEFT JOIN {users} reviewer ON mra.reviewer = reviewer.uid "
      . "LEFT JOIN {profile} profile ON reviewer.uid = profile.uid "
-     . "LEFT JOIN {field_data_field_prfl_firstname} reviewer_firstname ON profile.pid = reviewer_firstname.entity_id "
-     . "LEFT JOIN {field_data_field_prfl_lastname} reviewer_lastname ON profile.pid = reviewer_lastname.entity_id "
+     . "LEFT JOIN {field_data_field_profile2_firstname} reviewer_firstname ON profile.pid = reviewer_firstname.entity_id "
+     . "LEFT JOIN {field_data_field_profile2_lastname} reviewer_lastname ON profile.pid = reviewer_lastname.entity_id "
      . "LEFT JOIN {node} model_node ON mr.model_nid = model_node.nid "
      . "WHERE mra.statusid = 40";
 $results = db_query($sql);
@@ -229,14 +229,14 @@ if ($row = $results->fetchObject()) {
 
 <?php
 $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, statusdate, reviewer, "
-     . "reviewer_firstname.field_prfl_firstname_value as reviewer_first, "
-     . "reviewer_lastname.field_prfl_lastname_value as reviewer_last, model_node.title AS model_title "
+     . "reviewer_firstname.field_profile2_firstname_value as reviewer_first, "
+     . "reviewer_lastname.field_profile2_lastname_value as reviewer_last, model_node.title AS model_title "
      . "FROM {modelreview} mr "
      . "INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid "
      . "LEFT JOIN {users} reviewer ON mra.reviewer = reviewer.uid "
      . "LEFT JOIN {profile} profile ON reviewer.uid = profile.uid "
-     . "LEFT JOIN {field_data_field_prfl_firstname} reviewer_firstname ON profile.pid = reviewer_firstname.entity_id "
-     . "LEFT JOIN {field_data_field_prfl_lastname} reviewer_lastname ON profile.pid = reviewer_lastname.entity_id "
+     . "LEFT JOIN {field_data_field_profile2_firstname} reviewer_firstname ON profile.pid = reviewer_firstname.entity_id "
+     . "LEFT JOIN {field_data_field_profile2_lastname} reviewer_lastname ON profile.pid = reviewer_lastname.entity_id "
      . "LEFT JOIN {node} model_node ON mr.model_nid = model_node.nid "
      . "WHERE mra.statusid = 50";
 $results = db_query($sql);
