@@ -203,14 +203,14 @@ function modelreview_menu() {
     'weight' => 10,
   );
 
-  $items['admin/settings/modelreview'] = array(
-    'title' => 'Model Reviews Settings',
-    'description' => "Configuration settings for Model Reviews",
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('modelreview_admin_settings'),
-    'access arguments' => array('administer model reviews'),
-    'type' => MENU_NORMAL_ITEM,
-  );
+#  $items['admin/settings/modelreview'] = array(
+#    'title' => 'Model Reviews Settings',
+#    'description' => "Configuration settings for Model Reviews",
+#    'page callback' => 'drupal_get_form',
+#    'page arguments' => array('modelreview_admin_settings'),
+#    'access arguments' => array('administer model reviews'),
+#    'type' => MENU_NORMAL_ITEM,
+#  );
 
   return $items;
 }
