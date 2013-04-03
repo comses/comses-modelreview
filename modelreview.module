@@ -203,14 +203,23 @@ function modelreview_menu() {
     'weight' => 10,
   );
 
-#  $items['admin/settings/modelreview'] = array(
-#    'title' => 'Model Reviews Settings',
-#    'description' => "Configuration settings for Model Reviews",
-#    'page callback' => 'drupal_get_form',
-#    'page arguments' => array('modelreview_admin_settings'),
-#    'access arguments' => array('administer model reviews'),
-#    'type' => MENU_NORMAL_ITEM,
-#  );
+  $items['admin/config/comses_settings'] = array(
+    'title' => 'CoMSES Modules Settings',
+    'description' => "Configuration settings for CoMSES Model Library features",
+    'page callback' => 'system_admin_menu_block_page',
+    'access arguments' => array('administer model reviews'),
+    'position' => 'right',
+    'weight' => 10,
+    'file' => 'system.admin.inc',
+    'file path' => drupal_get_path('module', 'system'),
+  );
+  $items['admin/config/comses_settings/modelreviews'] = array(
+    'title' => 'Model Reviews Settings',
+    'description' => "Configuration settings for Model Reviews",
+    'page callback' => 'modelreview_admin',
+    'access arguments' => array('administer model reviews'),
+    'type' => MENU_NORMAL_ITEM,
+  );
 
   return $items;
 }
@@ -281,6 +290,44 @@ function modelreview_request_page() {
   return theme('request_review_page', array( 
         'model_nid' => arg(1), 
       ));
+}
+
+function modelreview_admin() {
+  $build = array();
+  
+  $build['content'] = array(
+    'section1' => drupal_get_form('modelreview_admin_message_settings_form'),
+  );
+  
+  $build['pager'] = array(
+    '#theme' => 'pager',
+    '#weight' => 5,
+  );
+
+  return $build;
+}
+
+/**
+ * Admin settings page
+ */
+function modelreview_admin_message_settings_form() {
+  $form = array();
+
+  $form['notifications'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Email Notifications'),
+    '#collapsible' => FALSE, 
+    '#collapsed' => FALSE,
+  );
+
+  $form['notifications']['modelreview_emails_enabled'] = array(
+    '#type' => 'radios', 
+    '#title' => t('Enable/Disable Notifications'), 
+    '#default_value' => variable_get('modelreview_emails_enabled', 0), 
+    '#options' => array(t('Disabled'), t('Enabled')),
+  );
+
+  return system_settings_form($form);
 }
 
 /**
@@ -457,28 +504,6 @@ function modelreview_queues_page() {
   return $content;
 }
 
-/**
- * Admin settings page
- */
-function modelreview_admin_settings() {
-  $form = array();
-
-  $form['notifications'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Email Notifications'),
-    '#collapsible' => FALSE, 
-    '#collapsed' => FALSE,
-  );
-
-  $form['notifications']['modelreview_emails_enabled'] = array(
-    '#type' => 'radios', 
-    '#title' => t('Enable/Disable Notifications'), 
-    '#default_value' => variable_get('modelreview_emails_enabled', 0), 
-    '#options' => array(t('Disabled'), t('Enabled')),
-  );
-
-  return system_settings_form($form);
-}
 
 function modelreview_test_mail() {
   modelreview_send_mail('ndrollin@asu.edu', 'Test message subject', 'Test message body');
