@@ -16,8 +16,9 @@
   <p>In order for a model to be certified as meeting CoMSES Best-Practices Standards, it must:</p>
   <ol>
     <li>Have well-formatted and commented programming code. This is to ensure other users can understand and replicate the algorithms in your code.</li>
-    <li>Be fully documented using the ODD standard. By writing documentation that complies with the ODD, other modelers should be able to replicate your model and its results without having to refer to your programming code.</li>
+    <li>Be fully documented using the ODD standard for model documentation, or an equivalent documentation protocol. By writing documentation that complies with the ODD, other modelers should be able to replicate your model and its results without having to refer to your programming code. We recommend you look at some of the Certified models in the library to see relevant examples.</li>
     <li>Run correctly with the instructions provided with the model. If the model requires special input files or file structures to run, all must be fully explained in the instructions.</li>
+    <li>Correctly simulates the processes it claims to simulate.</li>
   </ol>
   <p>When your model is reviewed, it will be examined to verify it meets all these standards. The reviewer will indicate in the review system whether your model meets these standards. Any elements that require revision will be noted in the comments fields, and if necessary, your model will be flagged for you to revise as needed.</p>
   <p>We urge you to review your model according to these guidelines prior to requesting a review. Once you are confident your model is ready for review, submit your request below.</p>
