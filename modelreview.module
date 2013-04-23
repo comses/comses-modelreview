@@ -108,6 +108,12 @@ function modelreview_theme() {
       'template' => 'reviewer-status-page',
       'path' => drupal_get_path('module', 'modelreview') . '/tpl',
     ),
+    'info_review_page' => array(
+      'variables' => array(
+      ),
+      'template' => 'info-review-page',
+      'path' => drupal_get_path('module', 'modelreview') . '/tpl',
+    ),
     'request_review_page' => array(
       'variables' => array(
         'model_nid' => NULL,
@@ -203,6 +209,15 @@ function modelreview_menu() {
     'weight' => 10,
   );
 
+  // Info for the general public about model reviews
+  $items['models/reviews/info'] = array(
+    'title' => 'What Is A Model Review?',
+    'description' => "",
+    'page callback' => 'modelreview_info_page',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
   $items['admin/config/comses_settings'] = array(
     'title' => 'CoMSES Modules Settings',
     'description' => "Configuration settings for CoMSES Model Library features",
@@ -289,6 +304,11 @@ function modelreview_access_content($perms) {
 function modelreview_request_page() {
   return theme('request_review_page', array( 
         'model_nid' => arg(1), 
+      ));
+}
+
+function modelreview_info_page() {
+  return theme('info_review_page', array( 
       ));
 }
 
