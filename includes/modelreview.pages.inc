@@ -193,9 +193,9 @@ function modelreview_assignreviewer_form_submit($form, &$form_state) {
   $body = 'You have been assigned a new Model Review case for the model, "' . $title . '". You may access this review case by visiting: ' . l($base_url . "model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
 
   $query = 'SELECT u.mail FROM {users} u WHERE u.uid = :uid';
-  $reviewer_uid = db_query($query, array(':uid' => $form_state['values']['reviewer']))->fetchField();
+  $reviewer_mail = db_query($query, array(':uid' => $form_state['values']['reviewer']))->fetchField();
   if (variable_get('modelreview_emails_enabled', 0) == 1) {
-    modelreview_send_mail($reviewer_uid, $subject, $body);
+    modelreview_send_mail($reviewer_mail, $subject, $body);
   }
 
   drupal_goto('model/' . $modelnid . '/review/status'); 
@@ -492,8 +492,10 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
       break;
   }
 
+  $query = 'SELECT u.mail FROM {users} u WHERE u.uid = :uid';
+  $author_mail = db_query($query, array(':uid' => $author))->fetchField();
   if (variable_get('modelreview_emails_enabled', 0) == 1) {
-    modelreview_send_mail($author, $subject, $body);
+    modelreview_send_mail($author_mail, $subject, $body);
   }
 
   drupal_goto('model/' . $modelnid . '/review/status'); 
@@ -568,8 +570,11 @@ function modelreview_requestrereview_form_submit($form, &$form_state) {
 
   $subject = "Your Model Review Case requires a Re-Review";
   $body = 'A model you have reviewed., "'. $title .'," has been revised by the author, and the author has requested a re-review of their case to determine if the model now meets the requirements for certification. You may access this review case by visiting: '. l($base_url ."model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
+  
+  $query = 'SELECT u.mail FROM {users} u WHERE u.uid = :uid';
+  $reviewer_mail = db_query($query, array(':uid' => $reviewer))->fetchField();
   if (variable_get('modelreview_emails_enabled', 0) == 1) {
-    modelreview_send_mail($reviewer, $subject, $body);
+    modelreview_send_mail($reviewer_mail, $subject, $body);
   }
 
   // notify managing editor of the Re-review Request
