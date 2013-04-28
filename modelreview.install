@@ -39,6 +39,7 @@ function modelreview_install() {
  * Implementation of hook_uninstall
  */
 function modelreview_uninstall() {
+  variable_del('modelreview_system_enabled');
   variable_del('modelreview_emails_enabled');
   menu_rebuild();
 }
