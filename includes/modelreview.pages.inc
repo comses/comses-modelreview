@@ -49,11 +49,11 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
 
     // get the node id for the latest modelversion
     $query = "SELECT node.nid FROM {node} node "                              
-           . "LEFT JOIN {field_data_field_modelversion_modelnid} modelversion_modelnid "
+           . "LEFT JOIN {field_data_field_modelversion_model} modelversion_modelnid "
            . "ON node.nid = modelversion_modelnid.entity_id AND (modelversion_modelnid.entity_type = 'node'AND modelversion_modelnid.deleted = '0') "
            . "LEFT JOIN {field_data_field_modelversion_number} modelversion_number "
            . "ON node.nid = modelversion_number.entity_id AND (modelversion_number.entity_type = 'node' AND modelversion_number.deleted = '0') "
-           . "WHERE (modelversion_modelnid.field_modelversion_modelnid_value = :nid) AND (node.type IN ('modelversion')) "
+           . "WHERE (modelversion_modelnid.field_modelversion_model_nid = :nid) AND (node.type IN ('modelversion')) "
            . "ORDER BY field_modelversion_number_value DESC";
     $modelversion_nid = db_query_range($query, 0, 1, array(':nid' => $modelnid))->fetchField();
 
@@ -153,13 +153,13 @@ function modelreview_assignreviewer_form_submit($form, &$form_state) {
   $reviewer = $row->reviewer;
 
   // get the node id for the latest modelversion, using Views
-  $query = "SELECT node.nid FROM {node} node "                              
-         . "LEFT JOIN {field_data_field_modelversion_modelnid} modelversion_modelnid "
-         . "ON node.nid = modelversion_modelnid.entity_id AND (modelversion_modelnid.entity_type = 'node'AND modelversion_modelnid.deleted = '0') "
-         . "LEFT JOIN {field_data_field_modelversion_number} modelversion_number "
-         . "ON node.nid = modelversion_number.entity_id AND (modelversion_number.entity_type = 'node' AND modelversion_number.deleted = '0') "
-         . "WHERE (modelversion_modelnid.field_modelversion_modelnid_value = :nid) AND (node.type IN ('modelversion')) "
-         . "ORDER BY field_modelversion_number_value DESC";
+    $query = "SELECT node.nid FROM {node} node "                              
+           . "LEFT JOIN {field_data_field_modelversion_model} modelversion_modelnid "
+           . "ON node.nid = modelversion_modelnid.entity_id AND (modelversion_modelnid.entity_type = 'node'AND modelversion_modelnid.deleted = '0') "
+           . "LEFT JOIN {field_data_field_modelversion_number} modelversion_number "
+           . "ON node.nid = modelversion_number.entity_id AND (modelversion_number.entity_type = 'node' AND modelversion_number.deleted = '0') "
+           . "WHERE (modelversion_modelnid.field_modelversion_model_nid = :nid) AND (node.type IN ('modelversion')) "
+           . "ORDER BY field_modelversion_number_value DESC";
   $modelversion_nid = db_query_range($query, 0, 1, array(':nid' => $modelnid))->fetchField();
 
   // Insert new 'modelreview_action' record
@@ -296,13 +296,13 @@ function modelreview_review_form_submit($form, &$form_state) {
   $modelnid = $form_state['values']['model_nid'];
 
   // get the node id for the latest modelversion
-  $query = "SELECT node.nid FROM {node} node "                              
-         . "LEFT JOIN {field_data_field_modelversion_modelnid} modelversion_modelnid "
-         . "ON node.nid = modelversion_modelnid.entity_id AND (modelversion_modelnid.entity_type = 'node'AND modelversion_modelnid.deleted = '0') "
-         . "LEFT JOIN {field_data_field_modelversion_number} modelversion_number "
-         . "ON node.nid = modelversion_number.entity_id AND (modelversion_number.entity_type = 'node' AND modelversion_number.deleted = '0') "
-         . "WHERE (modelversion_modelnid.field_modelversion_modelnid_value = :nid) AND (node.type IN ('modelversion')) "
-         . "ORDER BY field_modelversion_number_value DESC";
+    $query = "SELECT node.nid FROM {node} node "                              
+           . "LEFT JOIN {field_data_field_modelversion_model} modelversion_modelnid "
+           . "ON node.nid = modelversion_modelnid.entity_id AND (modelversion_modelnid.entity_type = 'node'AND modelversion_modelnid.deleted = '0') "
+           . "LEFT JOIN {field_data_field_modelversion_number} modelversion_number "
+           . "ON node.nid = modelversion_number.entity_id AND (modelversion_number.entity_type = 'node' AND modelversion_number.deleted = '0') "
+           . "WHERE (modelversion_modelnid.field_modelversion_model_nid = :nid) AND (node.type IN ('modelversion')) "
+           . "ORDER BY field_modelversion_number_value DESC";
   $modelversion_nid = db_query_range($query, 0, 1, array(':nid' => $modelnid))->fetchField();
 
   // Insert new 'modelreview_action' record
@@ -408,13 +408,13 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
   $reviewer = $row->reviewer;
 
   // get the node id for the latest modelversion, using Views
-  $query = "SELECT node.nid FROM {node} node "                              
-         . "LEFT JOIN {field_data_field_modelversion_modelnid} modelversion_modelnid "
-         . "ON node.nid = modelversion_modelnid.entity_id AND (modelversion_modelnid.entity_type = 'node'AND modelversion_modelnid.deleted = '0') "
-         . "LEFT JOIN {field_data_field_modelversion_number} modelversion_number "
-         . "ON node.nid = modelversion_number.entity_id AND (modelversion_number.entity_type = 'node' AND modelversion_number.deleted = '0') "
-         . "WHERE (modelversion_modelnid.field_modelversion_modelnid_value = :nid) AND (node.type IN ('modelversion')) "
-         . "ORDER BY field_modelversion_number_value DESC";
+    $query = "SELECT node.nid FROM {node} node "                              
+           . "LEFT JOIN {field_data_field_modelversion_model} modelversion_modelnid "
+           . "ON node.nid = modelversion_modelnid.entity_id AND (modelversion_modelnid.entity_type = 'node'AND modelversion_modelnid.deleted = '0') "
+           . "LEFT JOIN {field_data_field_modelversion_number} modelversion_number "
+           . "ON node.nid = modelversion_number.entity_id AND (modelversion_number.entity_type = 'node' AND modelversion_number.deleted = '0') "
+           . "WHERE (modelversion_modelnid.field_modelversion_model_nid = :nid) AND (node.type IN ('modelversion')) "
+           . "ORDER BY field_modelversion_number_value DESC";
   $modelversion_nid = db_query_range($query, 0, 1, array(':nid' => $modelnid))->fetchField();
 
   // we need to lookup the review actions that have been submitted for the editor to review
@@ -530,13 +530,13 @@ function modelreview_requestrereview_form_submit($form, &$form_state) {
   $reviewer = $row->reviewer;
 
   // get the node id for the latest modelversion, using Views
-  $query = "SELECT node.nid FROM {node} node "                              
-         . "LEFT JOIN {field_data_field_modelversion_modelnid} modelversion_modelnid "
-         . "ON node.nid = modelversion_modelnid.entity_id AND (modelversion_modelnid.entity_type = 'node'AND modelversion_modelnid.deleted = '0') "
-         . "LEFT JOIN {field_data_field_modelversion_number} modelversion_number "
-         . "ON node.nid = modelversion_number.entity_id AND (modelversion_number.entity_type = 'node' AND modelversion_number.deleted = '0') "
-         . "WHERE (modelversion_modelnid.field_modelversion_modelnid_value = :nid) AND (node.type IN ('modelversion')) "
-         . "ORDER BY field_modelversion_number_value DESC";
+    $query = "SELECT node.nid FROM {node} node "                              
+           . "LEFT JOIN {field_data_field_modelversion_model} modelversion_modelnid "
+           . "ON node.nid = modelversion_modelnid.entity_id AND (modelversion_modelnid.entity_type = 'node'AND modelversion_modelnid.deleted = '0') "
+           . "LEFT JOIN {field_data_field_modelversion_number} modelversion_number "
+           . "ON node.nid = modelversion_number.entity_id AND (modelversion_number.entity_type = 'node' AND modelversion_number.deleted = '0') "
+           . "WHERE (modelversion_modelnid.field_modelversion_model_nid = :nid) AND (node.type IN ('modelversion')) "
+           . "ORDER BY field_modelversion_number_value DESC";
   $modelversion_nid = db_query_range($query, 0, 1, array(':nid' => $modelnid))->fetchField();
 
   // Insert new 'modelreview_action' record
