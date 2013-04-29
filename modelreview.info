@@ -1,9 +1,8 @@
 name = "CoMSES Model Reviews"
 description = "Model Review system for the CoMSES Model Library"
 package = OpenABM
-version = 7.x-1.0-RC1
+version = 7.x-1.0
 core = 7.x
-php = 5.2
 
 stylesheets[all][] = includes/modelreview.css
 

@@ -340,7 +340,7 @@ function modelreview_admin_message_settings_form() {
     '#collapsed' => FALSE,
   );
 
-  $form['reviews_enabled']['modelreviews_enabled'] = array(
+  $form['reviews_enabled']['modelreview_system_enabled'] = array(
     '#type' => 'radios', 
     '#title' => t('Enable/Disable Model Reviews'), 
     '#default_value' => variable_get('modelreview_system_enabled', 0), 
