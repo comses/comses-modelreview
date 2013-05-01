@@ -69,6 +69,20 @@ $title = $row->title;
       print '  </div>';
 
       print '  <div class="modelreview-section">';
+      print '    <div class="modelreview-section-head">Review Instructions</div>';
+      print '    <div>';
+      print '     <p>Please keep in mind that this is a review of the model implementation itself, not of its scientific or theoretical merits.</p>';
+      print '     <p>You are asked to review this model according to the following standards and determine if the model Meets, Partially Meets, or Does Not Meet any of these standards. Note fields are available for you to provide specific feedback or as needed to the model author or the editor regarding the case.</p>';
+      print '     <h3>CoMSES Model Standards:</h3>';
+      print '     <ul>';
+      print '       <li>The model code should be well-formatted and commented.</li>';
+      print '       <li>The model should be fully documented using the ODD standard or an equivalent documentation protocol.</li>';
+      print '       <li>The model should run correctly with the instructions provided. Any extra steps needed to preapre the model for running, such as placing input data files in specific locations, should be fully described in the operating instructions.</li>';
+      print '       <li>The model should correctly simulate the processes it claims to simulate.</li>';
+      print '    </div>';
+      print '  </div>';
+
+      print '  <div class="modelreview-section">';
       print '    <div class="modelreview-section-head">Complete Review</div>';
       print drupal_render(drupal_get_form('modelreview_review_form'));
       print '  </div>';
@@ -206,6 +220,20 @@ $title = $row->title;
           print '  </div>';
         }
       }
+
+      print '  <div class="modelreview-section">';
+      print '    <div class="modelreview-section-head">Review Instructions</div>';
+      print '    <div>';
+      print '     <p>Reminder: this is a review of the model implementation itself, not of its scientific or theoretical merits.</p>';
+      print '     <p>You are asked to re-review this model according to the following standards and determine if the model Meets, Partially Meets, or Does Not Meet any of these standards. Note fields are available for you to provide specific feedback or as needed to the model author or the editor regarding the case.</p>';
+      print '     <h3>CoMSES Model Standards:</h3>';
+      print '     <ul>';
+      print '       <li>The model code should be well-formatted and commented.</li>';
+      print '       <li>The model should be fully documented using the ODD standard or an equivalent documentation protocol.</li>';
+      print '       <li>The model should run correctly with the instructions provided. Any extra steps needed to preapre the model for running, such as placing input data files in specific locations, should be fully described in the operating instructions.</li>';
+      print '       <li>The model should correctly simulate the processes it claims to simulate.</li>';
+      print '    </div>';
+      print '  </div>';
 
       print '  <div class="modelreview-section">';
       print '    <div class="modelreview-section-head">Complete Review</div>';
