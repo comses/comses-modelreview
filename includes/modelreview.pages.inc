@@ -84,7 +84,7 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
     $title = $row->title;
 
     $subject = "Model Review has been requested";
-    $body = 'The author of the model, "' . $title . '", has requested a Model Review. A Reviewer needs to be assigned to this case, in order for it to proceed. You may access this case by visiting: ' . l($base_url . "model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
+    $body = 'The author of the model, "' . $title . '", has requested a Model Review. A Reviewer needs to be assigned to this case, in order for it to proceed. You may access this case by visiting: ' . l($base_url . "/model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
 
     $query = 'SELECT u.uid, u.mail FROM {users} u LEFT JOIN {users_roles} ur ON u.uid = ur.uid '
            . 'LEFT JOIN {role_permission} rp ON ur.rid = rp.rid '
@@ -190,7 +190,7 @@ function modelreview_assignreviewer_form_submit($form, &$form_state) {
   $title = $row->title;
 
   $subject = "You have been assigned a new Model Review case";
-  $body = 'You have been assigned a new Model Review case for the model, "' . $title . '". You may access this review case by visiting: ' . l($base_url . "model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
+  $body = 'You have been assigned a new Model Review case for the model, "' . $title . '". You may access this review case by visiting: ' . l($base_url . "/model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
 
   $query = 'SELECT u.mail FROM {users} u WHERE u.uid = :uid';
   $reviewer_mail = db_query($query, array(':uid' => $form_state['values']['reviewer']))->fetchField();
@@ -342,7 +342,7 @@ function modelreview_review_form_submit($form, &$form_state) {
   $title = $row->title;
 
   $subject = "Model Review has been completed";
-  $body = 'The model review case for the model, "' . $title . '", has been completed by the assigned Reviewer. The reviewer\'s notes and recommendation need to be processed by an Editor, and the case processed as needed. You may access this review case by browsing: ' . l($base_url . "model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
+  $body = 'The model review case for the model, "' . $title . '", has been completed by the assigned Reviewer. The reviewer\'s notes and recommendation need to be processed by an Editor, and the case processed as needed. You may access this review case by browsing: ' . l($base_url . "/model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
 
   $query = 'SELECT u.uid, u.mail FROM {users} u LEFT JOIN {users_roles} ur ON u.uid = ur.uid '
          . 'LEFT JOIN {role_permission} rp ON ur.rid = rp.rid '
@@ -478,17 +478,17 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
   switch ($form_state['values']['decision']) {
     case 0:
       $subject = "Model Review has been completed, Certification Denied";
-      $body = 'The model review case for your model, "' . $title . '", has been completed by a CoMSES Reviewer. Unfortunately, After reviewing your case, your model has been determined to meet CoMSES Modeling Best-Practices and your model cannot be certified. For more information on this please visit the Model Review Status Page at: ' . l($base_url . "model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
+      $body = 'The model review case for your model, "' . $title . '", has been completed by a CoMSES Reviewer. Unfortunately, After reviewing your case, your model has been determined to meet CoMSES Modeling Best-Practices and your model cannot be certified. For more information on this please visit the Model Review Status Page at: ' . l($base_url . "/model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
       break;
 
     case 1:
       $subject = "Model Review has been completed, Revisions Requested";
-      $body = 'The model review case for your model, "' . $title . '", has been completed by the assigned Reviewer. Before your model can be certified, the CoMSES Reviewer has requested some revisions be made to your model in order to fully meet Modeling Best Practes. To review the notes and recommendation for your case, please visit the Model Review Status Page at: ' . l($base_url . "model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
+      $body = 'The model review case for your model, "' . $title . '", has been completed by the assigned Reviewer. Before your model can be certified, the CoMSES Reviewer has requested some revisions be made to your model in order to fully meet Modeling Best Practes. To review the notes and recommendation for your case, please visit the Model Review Status Page at: ' . l($base_url . "/model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
       break;
 
     case 2:
       $subject = "Model Review has been completed, Certified";
-      $body = 'The model review case for your model, "' . $title . '", has been completed by a CoMSES Reviewer. After reviewing your case, your model has been determined to meet CoMSES Modeling Best-Practices and is now Certified. You may access this review case by visiting the Model Review Status Page at: ' . l($base_url . "model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
+      $body = 'The model review case for your model, "' . $title . '", has been completed by a CoMSES Reviewer. After reviewing your case, your model has been determined to meet CoMSES Modeling Best-Practices and is now Certified. You may access this review case by visiting the Model Review Status Page at: ' . l($base_url . "/model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
       break;
   }
 
@@ -579,7 +579,7 @@ function modelreview_requestrereview_form_submit($form, &$form_state) {
 
   // notify managing editor of the Re-review Request
   $subject = "Model Re-Review has been requested";
-  $body = 'The author of the model, "' . $title . '", has completed requested revisions and has requested a Re-Review of their model. The assigned Reviewer has been notified that they need to complete the Re-Review. You may access this case by visiting: ' . l($base_url . "model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
+  $body = 'The author of the model, "' . $title . '", has completed requested revisions and has requested a Re-Review of their model. The assigned Reviewer has been notified that they need to complete the Re-Review. You may access this case by visiting: ' . l($base_url . "/model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
 
   $query = 'SELECT u.uid, u.mail FROM {users} u LEFT JOIN {users_roles} ur ON u.uid = ur.uid '
          . 'LEFT JOIN {role_permission} rp ON ur.rid = rp.rid '
