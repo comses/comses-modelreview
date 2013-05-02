@@ -399,7 +399,7 @@ function modelreview_goto_status() {
   if ($user->uid == $author) {
     drupal_goto('model/' . $modelnid . '/review/status/author');
   } 
-  elseif (user_access('edit review') && $user->uid == $reviewer) {
+  elseif (user_access('review model') && $user->uid == $reviewer) {
     drupal_goto('model/' . $modelnid . '/review/status/reviewer');
   } 
   elseif (($user->uid == 1) || user_access('edit review')) {
