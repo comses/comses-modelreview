@@ -18,6 +18,7 @@
  * time based on the features that have been implemented for Model Reviews, but that
  * is fine, those sections won't be generated.
  */
+global $base_root;
 
 // Determine who is viewing the Status page and the current Review Status Code
 // Lookup the Model
@@ -55,12 +56,40 @@ $title = $row->title;
       drupal_goto('page/invalid-request'); 
       break;
 
-
-    case 20: // Reviewer Assigned
-      // Status 2: Show model status info, review form
+    case 20: // Invite Reviewer
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
-      print '      <div class="modelreview-textvalue">This model has been assigned to you as a CoMSES Reviewer and is waiting for your review to begin.</div>';
+      print '      <div class="modelreview-textvalue">
+
+<p>In order to promote best practices and high quality computational models, the CoMSES Net Computational Model Library allows authors of models in the library to request peer-review for Certification.</p>
+
+<p>As a member of CoMSES Net, would you be willing to review the model titled: "' . $title . '" for Certification in the CoMSES Net Computational Model Library? The review process is not intensive. It involves a review of the programming code and documentation to ensure it meets some basic standards for readability and whether the model runs correctly and does what it is stated to do. More information on the Model Certification standards and review process is available here: ' . l($base_root . '/page/model-review-overview', 'page/model-review-overview') . '</p>
+
+<p>The model can be viewed at: ' . l($base_root .'model/'. $model_nid, 'model/'. $model_nid) . '</p>
+
+<p>PLEASE CONFIRM THAT YOU ARE OR ARE NOT ABLE TO REVIEW THIS MODEL. THANK YOU!</p>
+
+<p>---------------------------------------------</p>';
+
+      print '      </div>';
+      print '      <div class="modelreview-acceptdecline status-section">'. drupal_render(drupal_get_form('modelreview_reviewer_acceptdecline_form')) .'</div>';
+
+      print '    </div>';
+      print '  </div>';
+      break;
+
+    case 23: // Reviewer Declined Case
+      print '    <div class="modelreview-field">';
+      print '      <div class="modelreview-label">Info on Current Status:</div>';
+      print '      <div class="modelreview-textvalue">Thank you for letting us know that you cannot review this model.</div>';
+      print '    </div>';
+      print '  </div>';
+      break;
+
+    case 25: // Reviewer Accepted Case
+      print '    <div class="modelreview-field">';
+      print '      <div class="modelreview-label">Info on Current Status:</div>';
+      print '      <div class="modelreview-textvalue">Thank you for accepting this model review case. It is now waiting for your review to be completed.</div>';
       print '    </div>';
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Assigned Reviewer:</div>';
@@ -89,7 +118,6 @@ $title = $row->title;
       break;
 
     case 30: // Review Completed
-      // Status 3: Thank you for your service
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
       print '      <div class="modelreview-textvalue">Thank you for your service. You will be notified if any further action is required from you on this model review.</div>';
@@ -102,7 +130,6 @@ $title = $row->title;
       break;
 
     case 40: // Model Revisions Needed
-      // Status 4: Thank you for your service
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
       print '      <div class="modelreview-textvalue">Thank you for your service. You will be notified if any further action is required from you on this model review.</div>';
@@ -116,7 +143,6 @@ $title = $row->title;
       break;
 
     case 50: // Re-Review Requested
-      // Status 5 (Re-Review): Show model status info and review form
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
       print '      <div class="modelreview-textvalue">The model author has completed model revisions and requested a re-review. Please review the model and submit your recommendation on whether this model should be now be certified.</div>';
@@ -242,8 +268,7 @@ $title = $row->title;
 
       break;
 
-    case 60:
-      // Status 6: Thank you for your service
+    case 60: // Case Closed - Certified
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
       print '      <div class="modelreview-textvalue">Thank you for your service. You will be notified if any further action is required from you on this model review.</div>';
@@ -256,8 +281,7 @@ $title = $row->title;
 
       break;
 
-    case 70:
-      // Status 7: Thank you for your service
+    case 70: // Case Closed - Denied
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
       print '      <div class="modelreview-textvalue">Thank you for your service. You will be notified if any further action is required from you on this model review.</div>';

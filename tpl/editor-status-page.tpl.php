@@ -52,10 +52,9 @@
 <?php
   switch ($statusid) {
     case 10: // Review Requested
-      // Status 1 (Requested): Assign Case to Reviewer
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
-      print '      <div class="modelreview-textvalue">The author has requested a review of this model. This case needs to be assigned to a reviewer. Please assign one below.</div>';
+      print '      <div class="modelreview-textvalue">The author has requested a review of this model. This case needs to be assigned to a reviewer. Please assign one below, and an invitation email will be sent to the potential reviewer.</div>';
       print '    </div>';
       print '  </div>';
 
@@ -66,9 +65,65 @@
 
       break;
 
+    case 20: // Reviewer Invited
+      print '    <div class="modelreview-field">';
+      print '      <div class="modelreview-label">Info on Current Status:</div>';
+      print '      <div class="modelreview-textvalue">Awaiting reviewer acceptance of this model review case.</div>';
+      print '    </div>';
+      print '  </div>';
+      break;
 
-    case 20: // Reviewer Assigned
-      // Status 2 (Assigned): Show model status and who is assigned as Reviewer
+    case 23: // Reviewer Declined Case
+      print '    <div class="modelreview-field">';
+      print '      <div class="modelreview-label">Info on Current Status:</div>';
+      print '      <div class="modelreview-textvalue">The reviewer has declined to review this model. This case needs to be assigned to a new reviewer. The previously invited reviewer may have suggested an alternate reviewer for this case. Please assign one below, and an invitation email will be sent to the potential reviewer.</div>';
+      print '    </div>';
+      print '  </div>';
+
+      // fetch Reviewer note
+
+      // Lookup declined reviewers (May be multiple entries if repeated rejections have occurred)
+      $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, mra.statusdate, mra.other_notes, "
+           . "mra.reviewer, reviewer_firstname.field_profile2_firstname_value as firstname, "
+           . "reviewer_lastname.field_profile2_lastname_value as lastname "
+           . "FROM {modelreview} mr "
+           . "INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 23 "
+           . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid "
+           . "LEFT JOIN {users} reviewer ON mra.reviewer = reviewer.uid "
+           . "LEFT JOIN {profile} p ON reviewer.uid = p.uid AND p.type = 'main' "
+           . "LEFT JOIN field_data_field_profile2_firstname reviewer_firstname ON p.pid = reviewer_firstname.entity_id "
+           . "LEFT JOIN field_data_field_profile2_lastname reviewer_lastname ON p.pid = reviewer_lastname.entity_id "
+           . "WHERE mr.model_nid = :nid ";
+      $declinedreviews = db_query($sql, array(':nid' => $model_nid));
+
+      while ($declinedreview_row = $declinedreviews->fetchObject()) {
+        print '  <div class="modelreview-reviewinfo modelreview-section">';
+        print '    <div class="modelreview-section-head">';
+        print '      <div class="modelreview-label">Review Declined</div>';
+        print '    </div>';
+        print '    <div class="modelreview-codeinfo modelreview-block">';
+        print '      <div class="modelreview-block-head">'. $declinedreview_row->firstname .' '. $declinedreview_row->lastname .'</div>';
+        print '      <div class="modelreview-field">';
+        print '        <div class="modelreview-label">Declined:</div>';
+        print '        <div class="modelreview-value">'. date('M j, Y - G:i', $declinedreview_row->statusdate) .'</div>';
+        print '      </div>';
+        print '      <div class="modelreview-field">';
+        print '        <div class="modelreview-label">Alternate Reviewers:</div>';
+        print '        <div class="modelreview-value">'. $declinedreview_row->other_notes .'</div>';
+        print '      </div>';
+        print '    </div>';
+        print '  </div>';
+      }
+
+      print '  <div class="modelreview-section">';
+      print '    <div class="modelreview-section-head">Assign New Reviewer</div>';
+      print drupal_render(drupal_get_form('modelreview_assignreviewer_form'));
+      print '  </div>';
+
+      break;
+
+    case 25: // Reviewer Accepted Case
+      // Show model status and who is assigned as Reviewer
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
       print '      <div class="modelreview-textvalue">This model has been assigned to a CoMSES Reviewer and is waiting for the review to begin.</div>';
@@ -82,7 +137,7 @@
       break;
 
     case 30: // Review Completed
-      // Status 3 (Review Completed): Review comments and recommendation, process case (Revise, Close)
+      // Review comments and recommendation, process case (Revise, Close)
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
       print '      <div class="modelreview-textvalue">The model review has been completed. Please review the Reviewer\'s notes and recommendation. Based on this information, select the most appropriate action below: Certify the model, return to the author for revisions, or deny certification.</div>';
@@ -98,7 +153,7 @@
       // Lookup Editor Notes (May be multiple posts due to re-reviews)
       $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, code_clean, code_commented, "
            . "model_documented, model_runs, code_notes, doc_notes, other_notes, editor_notes, recommendation FROM {modelreview} mr "
-           . "INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 40 "
+           . "INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid IN (40,50,60) "
            . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = :nid";
       $editoractions = db_query($sql, array(':nid' => $model_nid));
 
@@ -155,10 +210,6 @@
           print '        <div class="modelreview-label">Model Runs:</div>';
           print '        <div class="modelreview-value">'. $review_row->model_runs .'</div>';
           print '      </div>';
-//          print '      <div class="modelreview-field">';
-//          print '        <div class="modelreview-label">Notes on Running the Model:</div>';
-//          print '        <div class="modelreview-value">'. $review_row->run_notes .'</div>';
-//          print '      </div>';
           print '    </div>';
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Other Review Notes</div>';
@@ -239,10 +290,6 @@
           print '        <div class="modelreview-label">Model Runs:</div>';
           print '        <div class="modelreview-value">'. $review_row->model_runs .'</div>';
           print '      </div>';
-//          print '      <div class="modelreview-field">';
-//          print '        <div class="modelreview-label">Notes on Running the Model:</div>';
-//          print '        <div class="modelreview-value">'. $review_row->run_notes .'</div>';
-//          print '      </div>';
           print '    </div>';
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Other Review Notes</div>';
@@ -269,7 +316,7 @@
       break;
 
     case 40: // Model Revisions Needed
-      // Status 4 (Revision): Show model status & history
+      // Show model status & history
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
       print '      <div>This review case has been returned to the author, and is awaiting revisions.</div>';
@@ -285,7 +332,7 @@
       // Lookup Editor Notes (May be multiple posts due to re-reviews)
       $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, code_clean, code_commented, "
            . "model_documented, model_runs, code_notes, doc_notes, other_notes, editor_notes, recommendation FROM {modelreview} mr "
-           . "INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 40 "
+           . "INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid IN (40,50,60) "
            . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = :nid";
       $editoractions = db_query($sql, array(':nid' => $model_nid));
 
@@ -342,10 +389,6 @@
           print '        <div class="modelreview-label">Model Runs:</div>';
           print '        <div class="modelreview-value">'. $review_row->model_runs .'</div>';
           print '      </div>';
-//          print '      <div class="modelreview-field">';
-//          print '        <div class="modelreview-label">Notes on Running the Model:</div>';
-//          print '        <div class="modelreview-value">'. $review_row->run_notes .'</div>';
-//          print '      </div>';
           print '    </div>';
           print '    <div class="modelreview-instructions modelreview-block">';
           print '      <div class="modelreview-block-head">Other Review Notes</div>';
@@ -377,7 +420,7 @@
       break;
 
     case 50: // Re-Review Requested
-      // Status 5 (Re-Review): Show model status & history
+      // Show model status & history
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
       print '      <div>The model author has completed model revisions and requested a re-review. The case has been returned to the assigned reviewer for processing.</div>';
@@ -393,7 +436,7 @@
       // Lookup Editor Notes (May be multiple posts due to re-reviews)
       $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, code_clean, code_commented, "
            . "model_documented, model_runs, code_notes, doc_notes, other_notes, editor_notes, recommendation FROM {modelreview} mr "
-           . "INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 40 "
+           . "INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid IN (40,50,60) "
            . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = :nid";
       $editoractions = db_query($sql, array(':nid' => $model_nid));
 
@@ -500,7 +543,7 @@
       // Lookup Editor Notes (May be multiple posts due to re-reviews)
       $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, code_clean, code_commented, "
            . "model_documented, model_runs, code_notes, doc_notes, other_notes, editor_notes, recommendation FROM {modelreview} mr "
-           . "INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 40 "
+           . "INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid IN (40,50,60) "
            . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = :nid";
       $editoractions = db_query($sql, array(':nid' => $model_nid));
 
@@ -607,7 +650,7 @@
       // Lookup Editor Notes (May be multiple posts due to re-reviews)
       $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, code_clean, code_commented, "
            . "model_documented, model_runs, code_notes, doc_notes, other_notes, editor_notes, recommendation FROM {modelreview} mr "
-           . "INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 40 "
+           . "INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid IN (40,50,60) "
            . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = :nid";
       $editoractions = db_query($sql, array(':nid' => $model_nid));
 

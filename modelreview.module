@@ -52,7 +52,7 @@ function modelreview_views_api() {
   // Note that you can include 'path' in this array so that your views.inc 
   // file can be stored in a different location.
   return array(
-    'api' => 2.0,
+    'api' => 3.0,
     'path' => drupal_get_path('module', 'modelreview') .'/includes',
   );
 }
@@ -361,6 +361,136 @@ function modelreview_admin_message_settings_form() {
     '#options' => array(t('Disabled'), t('Enabled')),
   );
 
+
+  $form['notification_templates'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Notification Templates'),
+    '#collapsible' => TRUE, 
+    '#collapsed' => TRUE,
+  );
+
+  $form['notification_templates']['review_requested'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Review Requested'),
+    '#collapsible' => TRUE, 
+    '#collapsed' => TRUE,
+  );
+
+  $form['notification_templates']['review_requested']['destination'] = array(
+    '#type' => 'textfield', 
+    '#title' => t('Destination'), 
+    '#default_value' => '', 
+    '#size' => 32,
+    '#maxlength' => 32,
+    '#required' => TRUE,
+  );
+
+  $form['notification_templates']['review_requested']['destination_type'] = array(
+    '#type' => 'radios', 
+    '#title' => t('Destination Type'), 
+    '#default_value' => 0, 
+    '#options' => array(t('Role'), t('User')),
+    '#required' => TRUE,
+  );
+
+  $form['notification_templates']['review_requested']['subject'] = array(
+    '#type' => 'textfield', 
+    '#title' => t('Subject'), 
+    '#default_value' => '', 
+    '#size' => 128,
+    '#maxlength' => 128,
+    '#required' => TRUE,
+  );
+
+  $form['notification_templates']['review_requested']['body'] = array(
+    '#type' => 'textarea', 
+    '#title' => t('Message Body'), 
+    '#default_value' => '', 
+    '#required' => TRUE,
+  );
+
+
+  $form['notification_templates']['invite_reviewer'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Invite Reviewer'),
+    '#collapsible' => TRUE, 
+    '#collapsed' => TRUE,
+  );
+
+  $form['notification_templates']['invite_reviewer']['destination'] = array(
+    '#type' => 'textfield', 
+    '#title' => t('Destination'), 
+    '#default_value' => '', 
+    '#size' => 32,
+    '#maxlength' => 32,
+    '#required' => TRUE,
+  );
+
+  $form['notification_templates']['invite_reviewer']['destination_type'] = array(
+    '#type' => 'radios', 
+    '#title' => t('Destination Type'), 
+    '#default_value' => 0, 
+    '#options' => array(t('Role'), t('User')),
+    '#required' => TRUE,
+  );
+
+  $form['notification_templates']['invite_reviewer']['subject'] = array(
+    '#type' => 'textfield', 
+    '#title' => t('Subject'), 
+    '#default_value' => '', 
+    '#size' => 128,
+    '#maxlength' => 128,
+    '#required' => TRUE,
+  );
+
+  $form['notification_templates']['invite_reviewer']['body'] = array(
+    '#type' => 'textarea', 
+    '#title' => t('Message Body'), 
+    '#default_value' => '', 
+    '#required' => TRUE,
+  );
+
+
+  $form['notification_templates']['review_declined'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Review Declined'),
+    '#collapsible' => TRUE, 
+    '#collapsed' => TRUE,
+  );
+
+  $form['notification_templates']['review_declined']['destination'] = array(
+    '#type' => 'textfield', 
+    '#title' => t('Destination'), 
+    '#default_value' => '', 
+    '#size' => 32,
+    '#maxlength' => 32,
+    '#required' => TRUE,
+  );
+
+  $form['notification_templates']['review_declined']['destination_type'] = array(
+    '#type' => 'radios', 
+    '#title' => t('Destination Type'), 
+    '#default_value' => 0, 
+    '#options' => array(t('Role'), t('User')),
+    '#required' => TRUE,
+  );
+
+  $form['notification_templates']['review_declined']['subject'] = array(
+    '#type' => 'textfield', 
+    '#title' => t('Subject'), 
+    '#default_value' => '', 
+    '#size' => 128,
+    '#maxlength' => 128,
+    '#required' => TRUE,
+  );
+
+  $form['notification_templates']['review_declined']['body'] = array(
+    '#type' => 'textarea', 
+    '#title' => t('Message Body'), 
+    '#default_value' => '', 
+    '#required' => TRUE,
+  );
+
   return system_settings_form($form);
 }
 
@@ -451,7 +581,9 @@ function modelreview_status_page() {
   global $user;
   $modelnid = arg(1);
 
-  // Lookup Review for Assigned Reviewer
+  // Lookup name of assigned reviewer
+  // Get most recent assigned and/or accepted reviewer: 20-only or 20 & 25. Ignore previous reviewers who declined
+  //     Get last row with status 20, with no corresponding status 23
   $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, mra.statusdate, mra.reviewer, "
        . "reviewer_firstname.field_profile2_firstname_value as firstname, reviewer_lastname.field_profile2_lastname_value as lastname "
        . "FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 20 "
@@ -460,7 +592,9 @@ function modelreview_status_page() {
        . "LEFT JOIN {profile} p ON reviewer.uid = p.uid AND p.type = 'main' "
        . "LEFT JOIN field_data_field_profile2_firstname reviewer_firstname ON p.pid = reviewer_firstname.entity_id "
        . "LEFT JOIN field_data_field_profile2_lastname reviewer_lastname ON p.pid = reviewer_lastname.entity_id "
-       . "WHERE mr.model_nid = :nid";
+       . "WHERE mr.model_nid = :nid AND mra.reviewer NOT IN "
+       . "(SELECT reviewer FROM modelreview mr2 INNER JOIN modelreview_action mra2 ON mr2.rid = mra2.rid AND mra2.statusid = 23 WHERE mr2.model_nid = :nid) ";
+
   $result = db_query($sql, array(':nid' => $modelnid));
   $row = $result->fetchObject();
   if (isset($row->lastname))
@@ -536,11 +670,6 @@ function modelreview_queues_page() {
   ));
 
   return $content;
-}
-
-
-function modelreview_test_mail() {
-  modelreview_send_mail('ndrollin@asu.edu', 'Test message subject', 'Test message body');
 }
 
 

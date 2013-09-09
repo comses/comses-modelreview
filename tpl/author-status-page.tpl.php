@@ -51,7 +51,6 @@
 <?php
   switch ($statusid) {
     case 10: // Review Requested
-      // Status 1 (Requested): Show model status
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
       print '      <div class="modelreview-textvalue">Your request for a model review has been received. Your case will be assigned to a CoMSES Reviewer, who will review your model for fulfilling all design and documentation standards. Once the review has been completed, an Editor will examine the reviewers notes and determine whether any revisions need to be made to your model, or if it can be certified.</div>';
@@ -60,9 +59,24 @@
 
       break;
 
+    case 20: // Invite Reviewer
+      print '    <div class="modelreview-field">';
+      print '      <div class="modelreview-label">Info on Current Status:</div>';
+      print '      <div class="modelreview-textvalue">Your request for a model review has been received. Your case will be assigned to a CoMSES Reviewer, who will review your model for fulfilling all design and documentation standards. Once the review has been completed, an Editor will examine the reviewers notes and determine whether any revisions need to be made to your model, or if it can be certified.</div>';
+      print '    </div>';
+      print '  </div>';
 
-    case 20: // Reviewer Assigned
-      // Status 2 (Assigned): Show model status
+      break;
+
+    case 23: // Reviewer Declined Case
+      print '    <div class="modelreview-field">';
+      print '      <div class="modelreview-label">Info on Current Status:</div>';
+      print '      <div class="modelreview-textvalue">Your model has been assigned to a CoMSES Reviewer. The model review should begin shortly. Once the review has been completed, an Editor will examine the reviewer\'s notes and determine whether any revisions need to be made to your model, or if it can be certified.</div>';
+      print '    </div>';
+      print '  </div>';
+      break;
+
+    case 25: // Reviewer Accepted Case
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
       print '      <div class="modelreview-textvalue">Your model has been assigned to a CoMSES Reviewer. The model review should begin shortly. Once the review has been completed, an Editor will examine the reviewer\'s notes and determine whether any revisions need to be made to your model, or if it can be certified.</div>';
@@ -71,7 +85,6 @@
       break;
 
     case 30: // Review Completed
-      // Status 3 (Review Completed): Show model status
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
       print '      <div class="modelreview-textvalue">The model review has been completed. Soon, an Editor will examine the reviewer\'s notes and determine whether any revisions need to be made to your model, or if it can be certified. You will be notified when the Editor has processed your case.</div>';
@@ -81,7 +94,6 @@
       break;
 
     case 40: // Model Revisions Needed
-      // Status 4 (Revision): Show review comments and instructions, button to request a re-review
       //     Probably should verify latest model version is more recent than the version recorded during Review,
       //     So author can't request re-review until model has been updated to a newer version.
       print '    <div class="modelreview-field">';
@@ -184,7 +196,6 @@
       break;
 
     case 50: // Re-Review Requested
-      // Status 5 (Re-review): Show model status
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
       print '      <div>Your model has returned to your Reviewer in order for it to be re-reviewed. The model re-review should begin shortly. Once it has been completed, an Editor will examine the reviewers notes and determine whether your model may be certified.</div>';
@@ -193,8 +204,7 @@
 
       break;
 
-    case 60:
-      // Status 6 (Close - Certified): Show Certification info
+    case 60: // Case Closed - Certified
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
       print '      <div>Congratulations, your model has been determined to meet all appropriate standard for completeness and documentation. It has been Certified by CoMSES Net and is noted as such on the main Viewing page.</div>';
@@ -203,8 +213,7 @@
 
       break;
 
-    case 70:
-      // Status 7 (Close - Denied): Show Denial information
+    case 70: // Case Closed - Certification Denied`
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
       print '      <div>Unfortunately, your model can not be Certified at this time. Please note the reasons indicated below. If you have any questions or concerns baout this determination, please contact: ...</div>';

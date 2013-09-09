@@ -5,7 +5,7 @@
  */
 
 /**
- * Status Action 1: Request Review
+ * Status Action 10: Request Review
  */
 function modelreview_requestreview_form() {
   $form['model_nid'] = array(
@@ -101,7 +101,7 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
 }
 
 /**
- * Status Action 2: Assign Reviewer
+ * Status Action 20: Assign Reviewer
  */
 function modelreview_assignreviewer_form() {
   $options[NULL] = '';
@@ -172,7 +172,7 @@ function modelreview_assignreviewer_form_submit($form, &$form_state) {
                   'statusdate' => REQUEST_TIME,
                 ))
               ->execute();
-  watchdog('modelreview', 'Reviewer assigned to Model Review case. UID: %reviewer', array('%reviewer' => $form_state['values']['reviewer'],), WATCHDOG_INFO);
+  watchdog('modelreview', 'Reviewer invited to review Model Review case. UID: %reviewer', array('%reviewer' => $form_state['values']['reviewer'],), WATCHDOG_INFO);
 
   // now update 'modelreview' record with action sid
   $num_updated = db_update('modelreview')
@@ -182,27 +182,171 @@ function modelreview_assignreviewer_form_submit($form, &$form_state) {
                ->condition('rid', $review_id, '=')
                ->execute();
 
-  // notify the Assigned Reviewer
-  // lookup model node
-  $sql = "SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = :nid";
-  $result = db_query($sql, array(':nid' => $modelnid));
-  $row = $result->fetchObject();
-  $title = $row->title;
+  // notify the Assigned Reviewer if messaging is enabled
 
-  $subject = "You have been assigned a new Model Review case";
-  $body = 'You have been assigned a new Model Review case for the model, "' . $title . '". You may access this review case by visiting: ' . l($base_url . "/model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
-
-  $query = 'SELECT u.mail FROM {users} u WHERE u.uid = :uid';
-  $reviewer_mail = db_query($query, array(':uid' => $form_state['values']['reviewer']))->fetchField();
   if (variable_get('modelreview_emails_enabled', 0) == 1) {
+    // lookup model node
+    $sql = "SELECT n.nid, n.uid, n.title, b.body_summary AS `summary` FROM {node} n INNER JOIN {field_data_body} b ON n.nid = b.entity_id WHERE b.entity_type = 'node' AND b.bundle = 'model' AND n.nid = :nid";
+    $result = db_query($sql, array(':nid' => $modelnid));
+    $row = $result->fetchObject();
+    $title = $row->title;
+    $description = $row->summary;
+
+    $subject = "OpenABM Model for Review: " . $title;
+
+    $body = 'Dear CoMSES Member,
+
+In order to promote best practices and high quality computational models, the CoMSES Net Computational Model Library allows authors of models in the library to request peer-review for Certification.
+
+As a member of CoMSES Net, would you be willing to review the model titled: "' . $title . '" for Certification in the CoMSES Net Computational Model Library? The review process is not intensive. It involves a review of the programming code and documentation to ensure it meets some basic standards for readability and whether the model runs correctly and does what it is stated to do. More information on the Model Certification standards and review process is available here: ' . l($base_url . '/page/model-review-overview', '/page/model-review-overview') . '
+
+The model can be viewed at: ' . l($base_url . '/model/' . $modelnid, '/model/' . $modelnid) . '
+
+
+You can accept or decline this invitation by following this link: ' . l($base_url . '/model/' . $modelnid . '/review/status', 'model/' . $modelnid . '/review/status') . '. If you cannot review the model, when you submit your response on the Review Invitation page, can you also suggest alternative reviewers?
+
+PLEASE CONFIRM THAT YOU ARE OR ARE NOT ABLE TO REVIEW THIS MODEL. THANK YOU!
+
+---------------------------------------------
+A brief description of the model you are asked to review follows:
+
+' . $description . '
+---------------------------------------------
+
+
+Sincerely,
+Michael Barton';
+
+    $query = 'SELECT u.mail FROM {users} u WHERE u.uid = :uid';
+    $reviewer_mail = db_query($query, array(':uid' => $form_state['values']['reviewer']))->fetchField();
     modelreview_send_mail($reviewer_mail, $subject, $body);
   }
 
   drupal_goto('model/' . $modelnid . '/review/status'); 
 }
 
+
 /**
- * Status Action 3: Review Completed
+ * Status Action 23/25: Reviewer Accepts/Declines Case
+ */
+function modelreview_reviewer_acceptdecline_form() {
+  $acceptdecline = array(
+    25 => t('Accept This Review Case'),
+    23 => t('Decline This Review Case'),
+  );
+
+  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, mra.statusdate, mra.reviewer "
+       . "FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 20 "
+       . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid "
+       . "WHERE mr.model_nid = :nid AND mra.reviewer NOT IN "
+       . "(SELECT reviewer FROM modelreview mr2 INNER JOIN modelreview_action mra2 ON mr2.rid = mra2.rid AND mra2.statusid = 23 WHERE mr2.model_nid = :nid) ";
+  $result = db_query($sql, array(':nid' => arg(1)));
+  $row = $result->fetchObject();
+
+  $form['model_nid'] = array(
+    '#type' => 'hidden',
+    '#value' => arg(1),
+  );
+  $form['rid'] = array(
+    '#type' => 'hidden',
+    '#value' => $row->rid,
+  );
+  $form['reviewer'] = array(
+    '#type' => 'hidden',
+    '#value' => $row->reviewer,
+  );
+  $form['accept_decline'] = array(
+    '#type' => 'select',
+    '#title' => t('Will You Review This Model?'),
+    '#options' => $acceptdecline,
+  );
+  $form['other_notes'] = array(
+    '#type' => 'textarea',
+    '#title' => t('If You Are Unable to Review This Model, Can You Recommend Others Who Might?'),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+    '#submit' => array('modelreview_reviewer_acceptdecline_form_submit'),
+  );
+
+  return $form;
+}
+
+function modelreview_reviewer_acceptdecline_form_submit($form, &$form_state) {
+  global $base_url;
+  global $base_path;
+  global $user;
+  $modelnid = $form_state['values']['model_nid'];
+
+  dpr($form_state);
+
+  // get the node id for the latest modelversion
+  $query = "SELECT node.nid FROM {node} node "                              
+         . "LEFT JOIN {field_data_field_modelversion_model} modelversion_modelnid "
+         . "ON node.nid = modelversion_modelnid.entity_id AND (modelversion_modelnid.entity_type = 'node'AND modelversion_modelnid.deleted = '0') "
+         . "LEFT JOIN {field_data_field_modelversion_number} modelversion_number "
+         . "ON node.nid = modelversion_number.entity_id AND (modelversion_number.entity_type = 'node' AND modelversion_number.deleted = '0') "
+         . "WHERE (modelversion_modelnid.field_modelversion_model_nid = :nid) AND (node.type IN ('modelversion')) "
+         . "ORDER BY field_modelversion_number_value DESC";
+  $modelversion_nid = db_query_range($query, 0, 1, array(':nid' => $modelnid))->fetchField();
+
+  // Insert new 'modelreview_action' record
+  $action_sid = db_insert('modelreview_action')
+              ->fields(array(
+                  'rid' => $form_state['values']['rid'],
+                  'modelversion_nid' => $modelversion_nid,
+                  'reviewer' => $form_state['values']['reviewer'],
+                  'statusid' => $form_state['values']['accept_decline'],
+                  'statusdate' => REQUEST_TIME,
+                  'other_notes' => $form_state['values']['other_notes'],
+                ))
+              ->execute();
+  watchdog('modelreview', 'Reviewer %acceptdecline a Model Review case. RID: %rid', array('%acceptdecline' => $form_state['values']['accept_decline'] == 23 ? 'declined ' : 'accepted ','%rid' => $form_state['values']['rid'],), WATCHDOG_INFO);
+
+  // now update 'modelreview' record with action sid
+  $num_updated = db_update('modelreview')
+               ->fields(array(
+                   'sid' => $action_sid,
+                 ))
+               ->condition('rid', $form_state['values']['rid'], '=')
+               ->execute();
+
+  // notify Editors whether review case was accepted or declined.
+  // lookup model node
+  $sql = "SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = :nid";
+  $result = db_query($sql, array(':nid' => $modelnid));
+  $row = $result->fetchObject();
+  $title = $row->title;
+
+  // If case was declined, editor needs to assign to a new reviewer.
+  if ($form_state['values']['accept_decline'] == 23) {
+    $subject = "Reviewer has declined Model Review case";
+    $body = 'The reviewer invited to handle the review case for the model, "' . $title . '", has declined the review invitation. A new reviewer needs to be selected and assigned to this case. To view the model review case and the declining reviewer\'s notes, if any provided, on possible alternate reviewers can be viewed at the following link: ' . l($base_url . "/model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
+  } 
+  else {
+    // Else case was accepted, let editor know case is proceeding.
+    $subject = "Reviewer has accepted Model Review case";
+    $body = 'The reviewer invited to handle the review case for the model, "' . $title . '", has accepted the review invitation. They should be completing the model review shortly, at which time you will be notified of the new status. To view the model review case: ' . l($base_url . "/model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
+  }
+
+  $query = 'SELECT u.uid, u.mail FROM {users} u LEFT JOIN {users_roles} ur ON u.uid = ur.uid '
+         . 'LEFT JOIN {role_permission} rp ON ur.rid = rp.rid '
+         . 'WHERE rp.permission = :perm';
+  $result = db_query($query, array(':perm' => 'manage review'));
+
+  foreach ($result as $index => $record) 
+    if (variable_get('modelreview_emails_enabled', 0) == 1) {
+      modelreview_send_mail($record->mail, $subject, $body);
+    }
+  // Else case was accepted, and reviewer now needs to complete the review. No notifications need to be sent out.
+
+  drupal_goto('model/' . $modelnid . '/review/status'); 
+}
+
+/**
+ * Status Action 30: Review Completed
  */
 function modelreview_review_form() {
   $standards = array(
@@ -218,7 +362,7 @@ function modelreview_review_form() {
     2 => t('Certify (Accept)'),
   );
 
-  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 20 INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = :nid";
+  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 25 INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = :nid";
   $result = db_query($sql, array(':nid' => arg(1)));
   $row = $result->fetchObject();
 
@@ -401,7 +545,11 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
   $modelnid = $form_state['values']['model_nid'];
 
   // lookup the rid for the 'modelreview' record
-  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 20 INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = :nid";
+  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, mra.statusdate, mra.reviewer "
+       . "FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 20 "
+       . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid "
+       . "WHERE mr.model_nid = :nid AND mra.reviewer NOT IN "
+       . "(SELECT reviewer FROM modelreview mr2 INNER JOIN modelreview_action mra2 ON mr2.rid = mra2.rid AND mra2.statusid = 23 WHERE mr2.model_nid = :nid) ";
   $result = db_query($sql, array(':nid' => arg(1)));
   $row = $result->fetchObject();
   $review_id = $row->rid;
@@ -504,7 +652,7 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
 
 
 /**
- * Status Action 5: Request Re-Review
+ * Status Action 50: Request Re-Review
  */
 function modelreview_requestrereview_form() {
   $form['model_nid'] = array(
@@ -525,7 +673,11 @@ function modelreview_requestrereview_form_submit($form, &$form_state) {
   $modelnid = $form_state['values']['model_nid'];
 
   // lookup the rid for the open 'modelreview' record
-  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, statusdate, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 20 INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid WHERE mr.model_nid = :nid";
+  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, mra.statusdate, mra.reviewer "
+       . "FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 20 "
+       . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid "
+       . "WHERE mr.model_nid = :nid AND mra.reviewer NOT IN "
+       . "(SELECT reviewer FROM modelreview mr2 INNER JOIN modelreview_action mra2 ON mr2.rid = mra2.rid AND mra2.statusid = 23 WHERE mr2.model_nid = :nid) ";
   $result = db_query($sql, array(':nid' => $modelnid));
   $row = $result->fetchObject();
   $review_id = $row->rid;
