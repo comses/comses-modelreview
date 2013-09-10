@@ -12,7 +12,7 @@
  *   - $statusid:         Status ID of the latest review action
  *   - $statusdate:       Datetime (Unix) of the latest review action
  *   - $status:           Text of action status
- *   - $reviewer:         UID of Reviewer assigned to case
+ *   - $reviewer:         Name of Reviewer assigned to case
  *
  * This template is based off the Zen Node template. Some code may be unneeded at this
  * time based on the features that have been implemented for Model Reviews, but that
@@ -69,6 +69,10 @@
       print '    <div class="modelreview-field">';
       print '      <div class="modelreview-label">Info on Current Status:</div>';
       print '      <div class="modelreview-textvalue">Awaiting reviewer acceptance of this model review case.</div>';
+      print '    </div>';
+      print '    <div class="modelreview-field">';
+      print '      <div class="modelreview-label">Invited Reviewer:</div>';
+      print '      <div class="modelreview-textvalue">' . $reviewer . '</div>';
       print '    </div>';
       print '  </div>';
       break;

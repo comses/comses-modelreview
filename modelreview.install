@@ -36,16 +36,16 @@ function modelreview_install() {
   db_query($sql);
 
   $sql = "INSERT INTO {modelreview_messages} (`mid`, `name`, `destination`, `destination_type`, `subject`, `body`) VALUES
-    (1, 'review_requested', 'comses editor manager', 'role', 'Model Review has been requested', ''),
-    (2, 'invite_reviewer', 'comses reviewer', 'role', 'OpenABM Model for Review: [modelreview:modeltitle]', ''),
-    (3, 'review_declined', 'comses editor manager', 'role', 'Reviewer has declined Model Review case', ''),
-    (4, 'review_accepted', 'comses editor manager', 'role', 'Reviewer has accepted Model Review case', ''),
-    (5, 'review_completed', 'comses editor manager', 'role', 'Model Review has been completed', ''),
-    (6, 'cert_denied', 'author', 'role', 'Model Review has been completed, Certification Denied', ''),
-    (7, 'revision_needed', 'author', 'role', 'Model Review has been completed, Revisions Requested', ''),
-    (8, 'cert_accepted', 'author', 'role', 'Model Review has been completed, Certified', ''),
-    (9, 'rev_rereview', 'comses reviewer', 'role', 'Your Model Review Case requires a Re-Revie', ''),
-    (10, 'ed_rereview', 'comses editor manager', 'role', 'Model Re-Review has been requested', ''),
+    ('review_requested', 'comses editor manager', 'role', 'Model Review has been requested', ''),
+    ('invite_reviewer', 'comses reviewer', 'role', 'OpenABM Model for Review: [modelreview:modeltitle]', ''),
+    ('review_declined', 'comses editor manager', 'role', 'Reviewer has declined Model Review case', ''),
+    ('review_accepted', 'comses editor manager', 'role', 'Reviewer has accepted Model Review case', ''),
+    ('review_completed', 'comses editor manager', 'role', 'Model Review has been completed', ''),
+    ('cert_denied', 'author', 'role', 'Model Review has been completed, Certification Denied', ''),
+    ('revision_needed', 'author', 'role', 'Model Review has been completed, Revisions Requested', ''),
+    ('cert_accepted', 'author', 'role', 'Model Review has been completed, Certified', ''),
+    ('rev_rereview', 'comses reviewer', 'role', 'Your Model Review Case requires a Re-Revie', ''),
+    ('ed_rereview', 'comses editor manager', 'role', 'Model Re-Review has been requested', '');";
 
   db_query($sql);
 }
@@ -292,18 +292,3 @@ function modelreview_update_7101() {
   $query2 = db_query($sql);
 }
 
-function modelreview_update_7102() {
-  $sql = "INSERT INTO {modelreview_messages} (`mid`, `name`, `destination`, `destination_type`, `subject`, `body`) VALUES
-    (1, 'review_requested', 'comses editor manager', 'role', 'Model Review has been requested', ''),
-    (2, 'invite_reviewer', 'comses reviewer', 'role', '', ''),
-    (3, 'review_declined', 'comses editor manager', 'role', '', ''),
-    (4, 'review_accepted', 'comses editor manager', 'role', '', ''),
-    (5, 'review_completed', 'comses editor manager', 'role', '', ''),
-    (6, 'cert_denied', 'author', 'role', '', ''),
-    (7, 'revision_needed', 'author', 'role', '', ''),
-    (8, 'cert_accepted', 'author', 'role', '', ''),
-    (9, 'rev_rereview', 'comses reviewer', 'role', '', ''),
-    (10, 'ed_rereview', 'comses editor manager', 'role', '', ''),
-
-  $query = db_query($sql);
-}

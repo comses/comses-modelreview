@@ -162,6 +162,14 @@ function modelreview_menu() {
     'type' => MENU_NORMAL_ITEM,
   );
 
+  // Autocomplete function for selecting reviewers from the CoMSES Member pool
+  $items['model/%/review/autocomplete'] = array(
+    'page callback' => 'modelreview_reviewer_autocomplete',
+    'access callback' => 'modelreview_access_content',
+    'access arguments' => array(array('edit review')),
+    'type' => MENU_CALLBACK,
+  );
+
   // Review Status page
   $items['model/%/review/status'] = array(
     'title' => 'Review',
@@ -169,7 +177,7 @@ function modelreview_menu() {
     'page callback' => 'modelreview_goto_status',
     'page arguments' => array(array(1)),
     'access callback' => 'modelreview_access_content',
-    'access arguments' => array(array('edit review', 'review model', 'edit any model', 'edit own model')),
+    'access arguments' => array(array('edit review', 'review any model', 'review assigned model', 'edit any model', 'edit own model')),
     'type' => MENU_CALLBACK,
   );
 
@@ -201,7 +209,7 @@ function modelreview_menu() {
     'page callback' => 'modelreview_status_page',
     'page arguments' => array(array(1, 4)),
     'access callback' => 'modelreview_access_content',
-    'access arguments' => array(array('review model')),
+    'access arguments' => array(array('review any model', 'review assigned model')),
     'type' => MENU_LOCAL_TASK,
     'weight' => 3,
   ); 
@@ -222,7 +230,7 @@ function modelreview_menu() {
     'page callback' => 'modelreview_queues_page',
     //'page arguments' => array(array(1, 4)),
     'access callback' => 'modelreview_access_content',
-    'access arguments' => array(array('edit review', 'manage review', 'review model')),
+    'access arguments' => array(array('edit review', 'manage review', 'review any model')),
     'type' => MENU_LOCAL_TASK,
     'weight' => 10,
   );
@@ -244,9 +252,13 @@ function modelreview_menu() {
  */
 function modelreview_permission() {
   return array(
-    'review model' => array(
-      'title' => t('Review Models: Reviewers'),
-      'description' => t('Perform review on models. Users with this permission can be assigned as a Reviewer.'),
+    'review assigned model' => array(
+      'title' => t('Review Assigned Model: Reviewers'),
+      'description' => t('Perform review on an assigned model. Users with this permission can review model cases assigned to them.'),
+    ),
+    'review any model' => array(
+      'title' => t('Review Any Model: Managing Reviewers'),
+      'description' => t('Perform review on any model. Users with this permission can review any model case, inclduing those not assigned to them.'),
     ),
     'edit review' => array(
       'title' => t('Edit Review Cases: Review Editors'),
@@ -289,13 +301,22 @@ function modelreview_access_content($perms) {
 
   // if reviewer access requested
   // if reviewer hasn't been assigned yet, deny access
-  if (in_array('review model', $perms)) {
+  if (in_array('review any model', $perms) || in_array('review assigned model', $perms)) {
     $modelnid = arg(1);
     $sql = "SELECT COUNT(*) FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid WHERE mr.model_nid = :nid AND mra.statusid > 10;";
     $result = db_query($sql, array(':nid' => $modelnid));
     $review_count = $result->fetchField();
 
-    $reviewer_access = ($review_count > 0) && (($user->uid == 1) || user_access('review model'));
+    // lookup assigned reviewer
+    $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, mra.statusdate, mra.reviewer "
+         . "FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 20 "
+         . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid "
+         . "WHERE mr.model_nid = :nid AND mra.reviewer NOT IN "
+         . "(SELECT reviewer FROM modelreview mr2 INNER JOIN modelreview_action mra2 ON mr2.rid = mra2.rid AND mra2.statusid = 23 WHERE mr2.model_nid = :nid) ";
+    $result = db_query($sql, array(':nid' => arg(1)));
+    $row = $result->fetchObject();
+
+    $reviewer_access = ($review_count > 0) && (($user->uid == 1) || user_access('review any model') || (user_access('review assigned model') && $user->uid == $row->reviewer));
   }
 
   return ($author_access || $editor_access || $reviewer_access);
@@ -310,6 +331,32 @@ function modelreview_request_page() {
 function modelreview_info_page() {
   return theme('info_review_page', array( 
       ));
+}
+
+function modelreview_reviewer_autocomplete($string) {
+  $matches = array();
+
+  $query = db_select('users', 'u');
+  $query->leftJoin('users_roles', 'ur', 'u.uid = ur.uid');
+  $query->leftJoin('profile', 'p', "u.uid = p.uid AND p.type = 'main'");
+  $query->leftJoin('role_permission', 'rp', 'ur.rid = rp.rid');
+  $query->leftJoin('field_data_field_profile2_firstname', 'fn', 'p.pid = fn.entity_id');
+  $query->leftJoin('field_data_field_profile2_lastname', 'ln', 'p.pid = ln.entity_id');
+
+  $result = $query->fields('u', array('uid', 'name'))
+                  ->fields('ln', array('field_profile2_lastname_value'))
+                  ->fields('fn', array('field_profile2_firstname_value'))
+                  ->condition('rp.permission', 'review any model')
+                  ->condition('ln.field_profile2_lastname_value', '%' . db_like($string) . '%', 'LIKE')
+                  ->execute();
+
+  // add matches to $matches  
+  foreach ($result as $row) {
+    $matches[$row->name] = check_plain($row->field_profile2_lastname_value . ', ' . $row->field_profile2_firstname_value);
+  }
+ 
+  // return for JS
+  drupal_json_output($matches);
 }
 
 function modelreview_admin() {
@@ -529,7 +576,7 @@ function modelreview_goto_status() {
   if ($user->uid == $author) {
     drupal_goto('model/' . $modelnid . '/review/status/author');
   } 
-  elseif (user_access('review model') && $user->uid == $reviewer) {
+  elseif (user_access('review any model') && $user->uid == $reviewer) {
     drupal_goto('model/' . $modelnid . '/review/status/reviewer');
   } 
   elseif (($user->uid == 1) || user_access('edit review')) {

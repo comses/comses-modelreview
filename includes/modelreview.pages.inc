@@ -104,21 +104,6 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
  * Status Action 20: Assign Reviewer
  */
 function modelreview_assignreviewer_form() {
-  $options[NULL] = '';
-  $query = "SELECT u.uid, reviewer_firstname.field_profile2_firstname_value as firstname, "
-         . "reviewer_lastname.field_profile2_lastname_value as lastname FROM {users} u LEFT JOIN {users_roles} ur ON u.uid = ur.uid "
-         . "LEFT JOIN {profile} p ON u.uid = p.uid AND p.type = 'main' "
-         . "LEFT JOIN {role_permission} rp ON ur.rid = rp.rid "
-         . "LEFT JOIN {field_data_field_profile2_firstname} reviewer_firstname ON p.pid = reviewer_firstname.entity_id "
-         . "LEFT JOIN {field_data_field_profile2_lastname} reviewer_lastname ON p.pid = reviewer_lastname.entity_id "
-         . "WHERE rp.permission = :perm";
-  $result = db_query($query, array(':perm' => 'review model'));
-
-  foreach ($result as $index => $record) {
-    // don't include user 1 (system maintenance account)
-    if ($record->uid > 1)
-      $options[$record->uid] = substr($record->firstname, 0, 1) . ' ' . $record->lastname;
-  }
 
   $form['model_nid'] = array(
     '#type' => 'hidden',
@@ -126,9 +111,10 @@ function modelreview_assignreviewer_form() {
   );
 
   $form['reviewer'] = array(
-    '#type' => 'select',
+    '#type' => 'textfield',
     '#title' => t('Assign Reviewer'),
-    '#options' => $options,
+    '#description' => t('Begin typing last name of CoMSES Member'),
+    '#autocomplete_path' => 'model/'. arg(1) .'/review/autocomplete',
   );
 
   $form['submit'] = array(
@@ -153,21 +139,25 @@ function modelreview_assignreviewer_form_submit($form, &$form_state) {
   $reviewer = $row->reviewer;
 
   // get the node id for the latest modelversion, using Views
-    $query = "SELECT node.nid FROM {node} node "                              
-           . "LEFT JOIN {field_data_field_modelversion_model} modelversion_modelnid "
-           . "ON node.nid = modelversion_modelnid.entity_id AND (modelversion_modelnid.entity_type = 'node'AND modelversion_modelnid.deleted = '0') "
-           . "LEFT JOIN {field_data_field_modelversion_number} modelversion_number "
-           . "ON node.nid = modelversion_number.entity_id AND (modelversion_number.entity_type = 'node' AND modelversion_number.deleted = '0') "
-           . "WHERE (modelversion_modelnid.field_modelversion_model_nid = :nid) AND (node.type IN ('modelversion')) "
-           . "ORDER BY field_modelversion_number_value DESC";
+  $query = "SELECT node.nid FROM {node} node "                              
+         . "LEFT JOIN {field_data_field_modelversion_model} modelversion_modelnid "
+         . "ON node.nid = modelversion_modelnid.entity_id AND (modelversion_modelnid.entity_type = 'node'AND modelversion_modelnid.deleted = '0') "
+         . "LEFT JOIN {field_data_field_modelversion_number} modelversion_number "
+         . "ON node.nid = modelversion_number.entity_id AND (modelversion_number.entity_type = 'node' AND modelversion_number.deleted = '0') "
+         . "WHERE (modelversion_modelnid.field_modelversion_model_nid = :nid) AND (node.type IN ('modelversion')) "
+         . "ORDER BY field_modelversion_number_value DESC";
   $modelversion_nid = db_query_range($query, 0, 1, array(':nid' => $modelnid))->fetchField();
+
+  // lookup the uid for the chosen reviewer username
+  $query = "SELECT u.uid FROM {users} u WHERE u.name = :name";
+  $reviewer_uid = db_query($query, array(':name' => $form_state['values']['reviewer']))->fetchField();
 
   // Insert new 'modelreview_action' record
   $action_sid = db_insert('modelreview_action')
               ->fields(array(
                   'rid' => $review_id,
                   'modelversion_nid' => $modelversion_nid,
-                  'reviewer' => $form_state['values']['reviewer'],
+                  'reviewer' => $reviewer_uid,
                   'statusid' => 20,
                   'statusdate' => REQUEST_TIME,
                 ))
