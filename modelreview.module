@@ -346,7 +346,7 @@ function modelreview_reviewer_autocomplete($string) {
   $result = $query->fields('u', array('uid', 'name'))
                   ->fields('ln', array('field_profile2_lastname_value'))
                   ->fields('fn', array('field_profile2_firstname_value'))
-                  ->condition('rp.permission', 'review any model')
+                  ->condition('rp.permission', 'review assigned model')
                   ->condition('ln.field_profile2_lastname_value', '%' . db_like($string) . '%', 'LIKE')
                   ->execute();
 

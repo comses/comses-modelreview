@@ -6,8 +6,12 @@
 
 /**
  * Status Action 10: Request Review
+ *
+ * @param $form
+ * @param $form_state
+ * @return array
  */
-function modelreview_requestreview_form() {
+function modelreview_requestreview_form($form, &$form_state) {
   $form['model_nid'] = array(
     '#type' => 'hidden',
     '#value' => arg(1),
@@ -20,6 +24,12 @@ function modelreview_requestreview_form() {
   return $form;
 }
 
+/**
+ * Submit handler for the review request form.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function modelreview_requestreview_form_submit($form, &$form_state) {
   global $base_url;
   global $base_path;
@@ -102,8 +112,12 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
 
 /**
  * Status Action 20: Assign Reviewer
+ *
+ * @param $form
+ * @param $form_state
+ * @return array
  */
-function modelreview_assignreviewer_form() {
+function modelreview_assignreviewer_form($form, &$form_state) {
 
   $form['model_nid'] = array(
     '#type' => 'hidden',
@@ -113,11 +127,15 @@ function modelreview_assignreviewer_form() {
   $form['reviewer'] = array(
     '#type' => 'textfield',
     '#title' => t('Assign Reviewer'),
-    '#description' => t('Begin typing last name of CoMSES Member'),
+    '#description' => t('Type last name of CoMSES Member for dropdown list'),
     '#autocomplete_path' => 'model/'. arg(1) .'/review/autocomplete',
   );
 
-  $form['submit'] = array(
+  $form['actions'] = array(
+    '#type' => 'actions'
+  );
+
+  $form['actions']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Submit'),
   );
@@ -125,6 +143,40 @@ function modelreview_assignreviewer_form() {
   return $form;
 }
 
+/**
+ * Validate handler to verify entered username.
+ *
+ * In case the user did not actually use the autocomplete or typed an invalid username, we'll look up
+ * the username in the database and verify it corresponds with a CoMSES Member account.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function modelreview_assignreviewer_form_validate($form, &$form_state) {
+  $reviewer = $form_state['values']['reviewer'];
+
+  // lookup user name and count number of matches
+  $query = db_select('users', 'u');
+  $query->leftJoin('users_roles', 'ur', 'u.uid = ur.uid');
+  $query->leftJoin('role_permission', 'rp', 'ur.rid = rp.rid');
+  $result = $query->fields('u', array('uid'))
+                  ->condition('rp.permission', 'review assigned model')
+                  ->condition('u.name', check_plain($reviewer))
+                  ->execute();
+
+  $match = $result->rowCount();
+
+  if ($match == 0) {
+    form_error($form['reviewer'], t('The "Reviewer" field must contain a valid value, the username of a CoMSES Member. The field will autocomplete suggestions when you start typing the last name of the member you have chosen.', array())); 
+  }
+}
+
+/**
+ * Submit handler for the assign reviewer form.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function modelreview_assignreviewer_form_submit($form, &$form_state) {
   global $base_url;
   global $base_path;
@@ -136,7 +188,6 @@ function modelreview_assignreviewer_form_submit($form, &$form_state) {
   $result = db_query($sql, array(':nid' => $modelnid));
   $row = $result->fetchObject();
   $review_id = $row->rid;
-  $reviewer = $row->reviewer;
 
   // get the node id for the latest modelversion, using Views
   $query = "SELECT node.nid FROM {node} node "                              
@@ -175,40 +226,42 @@ function modelreview_assignreviewer_form_submit($form, &$form_state) {
   // notify the Assigned Reviewer if messaging is enabled
 
   if (variable_get('modelreview_emails_enabled', 0) == 1) {
-    // lookup model node
-    $sql = "SELECT n.nid, n.uid, n.title, b.body_summary AS `summary` FROM {node} n INNER JOIN {field_data_body} b ON n.nid = b.entity_id WHERE b.entity_type = 'node' AND b.bundle = 'model' AND n.nid = :nid";
-    $result = db_query($sql, array(':nid' => $modelnid));
-    $row = $result->fetchObject();
-    $title = $row->title;
-    $description = $row->summary;
+    // lookup model title
+    $sql = "SELECT title FROM {node} WHERE nid = :nid";
+    $title = db_query($sql, array(':nid' => $modelnid))->fetchField();
+
+    $sql = "SELECT body_value FROM {field_data_body} WHERE entity_type = 'node' AND bundle = 'model' AND entity_id = :nid";
+    $description = db_query($sql, array(':nid' => $modelnid))->fetchField();
 
     $subject = "OpenABM Model for Review: " . $title;
 
-    $body = 'Dear CoMSES Member,
+    $body = '<p>Dear CoMSES Member,</p>
 
-In order to promote best practices and high quality computational models, the CoMSES Net Computational Model Library allows authors of models in the library to request peer-review for Certification.
+<p>In order to promote best practices and high quality computational models, the CoMSES Net Computational Model Library allows authors of models in the library to request peer-review for Certification.</p>
 
-As a member of CoMSES Net, would you be willing to review the model titled: "' . $title . '" for Certification in the CoMSES Net Computational Model Library? The review process is not intensive. It involves a review of the programming code and documentation to ensure it meets some basic standards for readability and whether the model runs correctly and does what it is stated to do. More information on the Model Certification standards and review process is available here: ' . l($base_url . '/page/model-review-overview', '/page/model-review-overview') . '
+<p>As a member of CoMSES Net, would you be willing to review the model titled: "' . $title . '" for Certification in the CoMSES Net Computational Model Library? The review process is not intensive. It involves a review of the programming code and documentation to ensure it meets some basic standards for readability and whether the model runs correctly and does what it is stated to do. More information on the Model Certification standards and review process is available here: ' . l($base_url . '/page/model-review-overview', $base_url . '/page/model-review-overview') . '</p>
 
-The model can be viewed at: ' . l($base_url . '/model/' . $modelnid, '/model/' . $modelnid) . '
-
-
-You can accept or decline this invitation by following this link: ' . l($base_url . '/model/' . $modelnid . '/review/status', 'model/' . $modelnid . '/review/status') . '. If you cannot review the model, when you submit your response on the Review Invitation page, can you also suggest alternative reviewers?
-
-PLEASE CONFIRM THAT YOU ARE OR ARE NOT ABLE TO REVIEW THIS MODEL. THANK YOU!
-
----------------------------------------------
-A brief description of the model you are asked to review follows:
-
-' . $description . '
----------------------------------------------
+<p>The model can be viewed at: ' . l($base_url . '/model/' . $modelnid, $base_url . '/model/' . $modelnid) . '</p>
 
 
-Sincerely,
-Michael Barton';
+<p>You can accept or decline this invitation by following this link: ' . l($base_url . '/model/' . $modelnid . '/review/status', $base_url . 'model/' . $modelnid . '/review/status') . '. If you cannot review the model, when you submit your response on the Review Invitation page, can you also suggest alternative reviewers?</p>
+
+<p><b>PLEASE CONFIRM THAT YOU ARE OR ARE NOT ABLE TO REVIEW THIS MODEL. THANK YOU!</b></p>
+
+* * * * * *
+
+<p>An excerpt of the model\'s description follows:</p>
+
+<h2>' . check_plain($title) . ':</h2><p>' . substr(check_plain($description), 0, 600) . '</p>
+
+* * * * * *
+
+
+<p>Sincerely,<br />
+Michael Barton</p>';
 
     $query = 'SELECT u.mail FROM {users} u WHERE u.uid = :uid';
-    $reviewer_mail = db_query($query, array(':uid' => $form_state['values']['reviewer']))->fetchField();
+    $reviewer_mail = db_query($query, array(':uid' => $reviewer_uid))->fetchField();
     modelreview_send_mail($reviewer_mail, $subject, $body);
   }
 
@@ -218,8 +271,12 @@ Michael Barton';
 
 /**
  * Status Action 23/25: Reviewer Accepts/Declines Case
+ *
+ * @param $form
+ * @param $form_state
+ * @return array
  */
-function modelreview_reviewer_acceptdecline_form() {
+function modelreview_reviewer_acceptdecline_form($form, &$form_state) {
   $acceptdecline = array(
     25 => t('Accept This Review Case'),
     23 => t('Decline This Review Case'),
@@ -264,13 +321,17 @@ function modelreview_reviewer_acceptdecline_form() {
   return $form;
 }
 
+/**
+ * Submit handler for the review accept/decline form.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function modelreview_reviewer_acceptdecline_form_submit($form, &$form_state) {
   global $base_url;
   global $base_path;
   global $user;
   $modelnid = $form_state['values']['model_nid'];
-
-  dpr($form_state);
 
   // get the node id for the latest modelversion
   $query = "SELECT node.nid FROM {node} node "                              
@@ -337,8 +398,12 @@ function modelreview_reviewer_acceptdecline_form_submit($form, &$form_state) {
 
 /**
  * Status Action 30: Review Completed
+ *
+ * @param $form
+ * @param $form_state
+ * @return array
  */
-function modelreview_review_form() {
+function modelreview_review_form($form, &$form_state) {
   $standards = array(
     0 => t('Does Not Meet Standards'),
     1 => t('Partially Meets Standards'),
@@ -423,6 +488,12 @@ function modelreview_review_form() {
   return $form;
 }
 
+/**
+ * Submit handler for the review form.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function modelreview_review_form_submit($form, &$form_state) {
   global $base_url;
   global $base_path;
@@ -496,8 +567,11 @@ function modelreview_review_form_submit($form, &$form_state) {
  *
  * Status Actions: Editor processes Review, Revise, Certify, or Deny
  *
+ * @param $form
+ * @param $form_state
+ * @return array
  */
-function modelreview_editor_process_form() {
+function modelreview_editor_process_form($form, &$form_state) {
   $decision = array(
     NULL => '',
     0 => t('Do Not Certify (Deny)'),
@@ -527,7 +601,13 @@ function modelreview_editor_process_form() {
 
   return $form;
 }
-
+  
+/**
+ * Submit handler for the editor processing form.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function modelreview_editor_process_form_submit($form, &$form_state) {
   global $base_url;
   global $base_path;
@@ -643,8 +723,12 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
 
 /**
  * Status Action 50: Request Re-Review
+ *
+ * @param $form
+ * @param $form_state
+ * @return array
  */
-function modelreview_requestrereview_form() {
+function modelreview_requestrereview_form($form, &$form_state) {
   $form['model_nid'] = array(
     '#type' => 'hidden',
     '#value' => arg(1),
@@ -657,6 +741,12 @@ function modelreview_requestrereview_form() {
   return $form;
 }
 
+/**
+ * Submit handler for the re-review request form.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function modelreview_requestrereview_form_submit($form, &$form_state) {
   global $base_url;
   global $base_path;

@@ -35,7 +35,7 @@ function modelreview_install() {
 
   db_query($sql);
 
-  $sql = "INSERT INTO {modelreview_messages} (`mid`, `name`, `destination`, `destination_type`, `subject`, `body`) VALUES
+  $sql = "INSERT INTO {modelreview_messages} (`name`, `destination`, `destination_type`, `subject`, `body`) VALUES
     ('review_requested', 'comses editor manager', 'role', 'Model Review has been requested', ''),
     ('invite_reviewer', 'comses reviewer', 'role', 'OpenABM Model for Review: [modelreview:modeltitle]', ''),
     ('review_declined', 'comses editor manager', 'role', 'Reviewer has declined Model Review case', ''),
