@@ -383,11 +383,13 @@ function modelreview_token_info() {
   $info = array();
 
   // Add any new tokens.
-  $info['tokens']['modelreview']['modeldesc'] = t('Model description.');
-  $info['tokens']['modelreview']['modeltitle'] = t('Model title.');
-  $info['tokens']['modelreview']['modelurl'] = t('Model url.');
-  $info['tokens']['modelreview']['reviewinfo'] = t('Model Review Info url.');
-  $info['tokens']['modelreview']['statusurl'] = t('Model review status url.');
+  $info['tokens']['modelreview']['author_name'] = t('Model author\'s name.');
+  $info['tokens']['modelreview']['model_desc'] = t('Model description.');
+  $info['tokens']['modelreview']['model_title'] = t('Model title.');
+  $info['tokens']['modelreview']['model_url'] = t('Model url.');
+  $info['tokens']['modelreview']['review_info'] = t('Model Review Info url.');
+  $info['tokens']['modelreview']['reviewer_name'] = t('Reviewer\'s name.');
+  $info['tokens']['modelreview']['status_url'] = t('Model review status url.');
 
   // Return them.
   return $info;
@@ -407,26 +409,52 @@ function modelreview_tokens($type, $tokens, array $data = array(), array $option
     foreach ($tokens as $name => $original) {
       // Find the desired token by name
       switch ($name) {
-        case 'modeldesc':
+        case 'author_name':
+          $sql = "SELECT author_firstname.field_profile2_firstname_value as firstname, "
+               . "author_lastname.field_profile2_lastname_value as lastname "
+               . "FROM {node} n "
+               . "LEFT JOIN {profile} p ON n.uid = p.uid AND p.type = 'main' "
+               . "LEFT JOIN field_data_field_profile2_firstname author_firstname ON p.pid = author_firstname.entity_id "
+               . "LEFT JOIN field_data_field_profile2_lastname author_lastname ON p.pid = author_lastname.entity_id "
+               . "WHERE n.nid = :nid ";
+          $author = db_query($sql, array(':nid' => $model_nid));
+          $replacements[$original] = $author->firstname . ' ' . $author->lastname;
+          break;
+
+        case 'model_desc':
           $sql = "SELECT body_value FROM {field_data_body} WHERE entity_type = 'node' AND bundle = 'model' AND entity_id = :nid";
           $replacements[$original] = substr(check_plain(db_query($sql, array(':nid' => $modelnid))->fetchField()), 0, 600);
           break;
 
-        case 'modeltitle':
+        case 'model_title':
           $sql = "SELECT title, uid FROM {node} WHERE nid = :nid";
           $model = db_query($sql, array(':nid' => $modelnid))->fetchObject();
           $replacements[$original] = check_plain($model->title);
           break;
 
-        case 'modelurl':
+        case 'model_url':
           $replacements[$original] = '/model/' . $modelurl;
           break;
 
-        case 'reviewinfo':
+        case 'review_info':
           $replacements[$original] = l($base_url . '/page/model-review-overview', $base_url . '/page/model-review-overview');
           break;
 
-        case 'statusurl':
+        case 'reviewer_name':
+          $sql = "SELECT reviewer_firstname.field_profile2_firstname_value as firstname, "
+               . "reviewer_lastname.field_profile2_lastname_value as lastname "
+               . "FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid "
+               . "LEFT JOIN {users} reviewer ON mra.reviewer = reviewer.uid "
+               . "LEFT JOIN {profile} p ON reviewer.uid = p.uid AND p.type = 'main' "
+               . "LEFT JOIN field_data_field_profile2_firstname reviewer_firstname ON p.pid = reviewer_firstname.entity_id "
+               . "LEFT JOIN field_data_field_profile2_lastname reviewer_lastname ON p.pid = reviewer_lastname.entity_id "
+               . "WHERE mr.model_nid = :nid ";
+          $review = db_query($sql, array(':nid' => $model_nid));
+          $replacements[$original] = $review->firstname . ' ' . $review->lastname;
+
+          break;
+
+        case 'status_url':
           $replacements[$original] = l($base_url . '/model/' . $modelnid . '/review/status', $base_url . 'model/' . $modelnid . '/review/status');
           break;
       }
