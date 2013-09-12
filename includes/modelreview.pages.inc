@@ -87,24 +87,8 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
                  ->execute();
 
     // notify all Editors
-    // lookup model node
-    $sql = "SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = :nid";
-    $result = db_query($sql, array(':nid' => $modelnid));
-    $row = $result->fetchObject();
-    $title = $row->title;
-
-    $subject = "Model Review has been requested";
-    $body = 'The author of the model, "' . $title . '", has requested a Model Review. A Reviewer needs to be assigned to this case, in order for it to proceed. You may access this case by visiting: ' . l($base_url . "/model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
-
-    $query = 'SELECT u.uid, u.mail FROM {users} u LEFT JOIN {users_roles} ur ON u.uid = ur.uid '
-           . 'LEFT JOIN {role_permission} rp ON ur.rid = rp.rid '
-           . 'WHERE rp.permission = :perm';
-    $result = db_query($query, array(':perm' => 'manage review'));
-
-    foreach ($result as $index => $record) 
-      if (variable_get('modelreview_emails_enabled', 0) == 1) {
-        modelreview_send_mail($record->mail, $subject, $body);
-      }
+    if (variable_get('modelreview_emails_enabled', 0) == 1)
+      modelreview_notify('review_requested');
 
     drupal_goto('model/' . $modelnid . '/review/status');
   }
@@ -224,46 +208,8 @@ function modelreview_assignreviewer_form_submit($form, &$form_state) {
                ->execute();
 
   // notify the Assigned Reviewer if messaging is enabled
-
-  if (variable_get('modelreview_emails_enabled', 0) == 1) {
-    // lookup model title
-    $sql = "SELECT title FROM {node} WHERE nid = :nid";
-    $title = db_query($sql, array(':nid' => $modelnid))->fetchField();
-
-    $sql = "SELECT body_value FROM {field_data_body} WHERE entity_type = 'node' AND bundle = 'model' AND entity_id = :nid";
-    $description = db_query($sql, array(':nid' => $modelnid))->fetchField();
-
-    $subject = "OpenABM Model for Review: " . $title;
-
-    $body = '<p>Dear CoMSES Member,</p>
-
-<p>In order to promote best practices and high quality computational models, the CoMSES Net Computational Model Library allows authors of models in the library to request peer-review for Certification.</p>
-
-<p>As a member of CoMSES Net, would you be willing to review the model titled: "' . $title . '" for Certification in the CoMSES Net Computational Model Library? The review process is not intensive. It involves a review of the programming code and documentation to ensure it meets some basic standards for readability and whether the model runs correctly and does what it is stated to do. More information on the Model Certification standards and review process is available here: ' . l($base_url . '/page/model-review-overview', $base_url . '/page/model-review-overview') . '</p>
-
-<p>The model can be viewed at: ' . l($base_url . '/model/' . $modelnid, $base_url . '/model/' . $modelnid) . '</p>
-
-
-<p>You can accept or decline this invitation by following this link: ' . l($base_url . '/model/' . $modelnid . '/review/status', $base_url . 'model/' . $modelnid . '/review/status') . '. If you cannot review the model, when you submit your response on the Review Invitation page, can you also suggest alternative reviewers?</p>
-
-<p><b>PLEASE CONFIRM THAT YOU ARE OR ARE NOT ABLE TO REVIEW THIS MODEL. THANK YOU!</b></p>
-
-* * * * * *
-
-<p>An excerpt of the model\'s description follows:</p>
-
-<h2>' . check_plain($title) . ':</h2><p>' . substr(check_plain($description), 0, 600) . '</p>
-
-* * * * * *
-
-
-<p>Sincerely,<br />
-Michael Barton</p>';
-
-    $query = 'SELECT u.mail FROM {users} u WHERE u.uid = :uid';
-    $reviewer_mail = db_query($query, array(':uid' => $reviewer_uid))->fetchField();
-    modelreview_send_mail($reviewer_mail, $subject, $body);
-  }
+  #if (variable_get('modelreview_emails_enabled', 0) == 1)
+    modelreview_notifications($modelnid, 'invite_reviewer');
 
   drupal_goto('model/' . $modelnid . '/review/status'); 
 }
@@ -365,33 +311,16 @@ function modelreview_reviewer_acceptdecline_form_submit($form, &$form_state) {
                ->execute();
 
   // notify Editors whether review case was accepted or declined.
-  // lookup model node
-  $sql = "SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = :nid";
-  $result = db_query($sql, array(':nid' => $modelnid));
-  $row = $result->fetchObject();
-  $title = $row->title;
-
-  // If case was declined, editor needs to assign to a new reviewer.
-  if ($form_state['values']['accept_decline'] == 23) {
-    $subject = "Reviewer has declined Model Review case";
-    $body = 'The reviewer invited to handle the review case for the model, "' . $title . '", has declined the review invitation. A new reviewer needs to be selected and assigned to this case. To view the model review case and the declining reviewer\'s notes, if any provided, on possible alternate reviewers can be viewed at the following link: ' . l($base_url . "/model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
-  } 
-  else {
-    // Else case was accepted, let editor know case is proceeding.
-    $subject = "Reviewer has accepted Model Review case";
-    $body = 'The reviewer invited to handle the review case for the model, "' . $title . '", has accepted the review invitation. They should be completing the model review shortly, at which time you will be notified of the new status. To view the model review case: ' . l($base_url . "/model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
-  }
-
-  $query = 'SELECT u.uid, u.mail FROM {users} u LEFT JOIN {users_roles} ur ON u.uid = ur.uid '
-         . 'LEFT JOIN {role_permission} rp ON ur.rid = rp.rid '
-         . 'WHERE rp.permission = :perm';
-  $result = db_query($query, array(':perm' => 'manage review'));
-
-  foreach ($result as $index => $record) 
-    if (variable_get('modelreview_emails_enabled', 0) == 1) {
-      modelreview_send_mail($record->mail, $subject, $body);
+  if (variable_get('modelreview_emails_enabled', 0) == 1) {
+    // If case was declined, editor needs to assign to a new reviewer.
+    if ($form_state['values']['accept_decline'] == 23) {
+      modelreview_notifications($modelnid, 'review_declined');
+    } 
+    else {
+      // Else case was accepted, let editor know case is proceeding.
+      modelreview_notifications($modelnid, 'review_accepted');
     }
-  // Else case was accepted, and reviewer now needs to complete the review. No notifications need to be sent out.
+  }
 
   drupal_goto('model/' . $modelnid . '/review/status'); 
 }
@@ -540,24 +469,8 @@ function modelreview_review_form_submit($form, &$form_state) {
                ->execute();
 
   // notify all Editors
-  // lookup model node
-  $sql = "SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = :nid";
-  $result = db_query($sql, array(':nid' => $modelnid));
-  $row = $result->fetchObject();
-  $title = $row->title;
-
-  $subject = "Model Review has been completed";
-  $body = 'The model review case for the model, "' . $title . '", has been completed by the assigned Reviewer. The reviewer\'s notes and recommendation need to be processed by an Editor, and the case processed as needed. You may access this review case by browsing: ' . l($base_url . "/model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
-
-  $query = 'SELECT u.uid, u.mail FROM {users} u LEFT JOIN {users_roles} ur ON u.uid = ur.uid '
-         . 'LEFT JOIN {role_permission} rp ON ur.rid = rp.rid '
-         . 'WHERE rp.permission = :perm';
-  $result = db_query($query, array(':perm' => 'manage review'));
-
-  foreach ($result as $index => $record) 
-    if (variable_get('modelreview_emails_enabled', 0) == 1) {
-      modelreview_send_mail($record->mail, $subject, $body);
-    }
+  if (variable_get('modelreview_emails_enabled', 0) == 1)
+    modelreview_notifications($modelnid, 'review_completed');
 
   drupal_goto('model/' . $modelnid . '/review/status'); 
 }
@@ -693,31 +606,23 @@ function modelreview_editor_process_form_submit($form, &$form_state) {
   $author = $row->uid;
 
   // notify the Author about this action
-  switch ($form_state['values']['decision']) {
-    case 0:
-      $subject = "Model Review has been completed, Certification Denied";
-      $body = 'The model review case for your model, "' . $title . '", has been completed by a CoMSES Reviewer. Unfortunately, After reviewing your case, your model has been determined to meet CoMSES Modeling Best-Practices and your model cannot be certified. For more information on this please visit the Model Review Status Page at: ' . l($base_url . "/model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
-      break;
-
-    case 1:
-      $subject = "Model Review has been completed, Revisions Requested";
-      $body = 'The model review case for your model, "' . $title . '", has been completed by the assigned Reviewer. Before your model can be certified, the CoMSES Reviewer has requested some revisions be made to your model in order to fully meet Modeling Best Practes. To review the notes and recommendation for your case, please visit the Model Review Status Page at: ' . l($base_url . "/model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
-      break;
-
-    case 2:
-      $subject = "Model Review has been completed, Certified";
-      $body = 'The model review case for your model, "' . $title . '", has been completed by a CoMSES Reviewer. After reviewing your case, your model has been determined to meet CoMSES Modeling Best-Practices and is now Certified. You may access this review case by visiting the Model Review Status Page at: ' . l($base_url . "/model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
-      break;
-  }
-
-  $query = 'SELECT u.mail FROM {users} u WHERE u.uid = :uid';
-  $author_mail = db_query($query, array(':uid' => $author))->fetchField();
   if (variable_get('modelreview_emails_enabled', 0) == 1) {
-    modelreview_send_mail($author_mail, $subject, $body);
+    switch ($form_state['values']['decision']) {
+      case 0:
+        modelreview_notifications($modelnid, 'cert_denied');
+        break;
+
+      case 1:
+        modelreview_notifications($modelnid, 'revision_needed');
+        break;
+
+      case 2:
+        modelreview_notifications($modelnid, 'cert_accepted');
+        break;
+    }
   }
 
   drupal_goto('model/' . $modelnid . '/review/status'); 
-
 }
 
 
@@ -794,34 +699,12 @@ function modelreview_requestrereview_form_submit($form, &$form_state) {
                ->execute();
 
   // notify the Assigned Reviewer
-  // lookup model node
-  $sql = "SELECT nid, uid, title FROM {node} WHERE type = 'model' AND node.nid = :nid";
-  $result = db_query($sql, array(':nid' => $modelnid));
-  $row = $result->fetchObject();
-  $title = $row->title;
-
-  $subject = "Your Model Review Case requires a Re-Review";
-  $body = 'A model you have reviewed., "'. $title .'," has been revised by the author, and the author has requested a re-review of their case to determine if the model now meets the requirements for certification. You may access this review case by visiting: '. l($base_url ."model/". $modelnid ."/review/status", "model/". $modelnid ."/review/status");
-  
-  $query = 'SELECT u.mail FROM {users} u WHERE u.uid = :uid';
-  $reviewer_mail = db_query($query, array(':uid' => $reviewer))->fetchField();
-  if (variable_get('modelreview_emails_enabled', 0) == 1) {
-    modelreview_send_mail($reviewer_mail, $subject, $body);
-  }
+  if (variable_get('modelreview_emails_enabled', 0) == 1)
+    modelreview_notifications($modelnid, 'reviewer_rereview');
 
   // notify managing editor of the Re-review Request
-  $subject = "Model Re-Review has been requested";
-  $body = 'The author of the model, "' . $title . '", has completed requested revisions and has requested a Re-Review of their model. The assigned Reviewer has been notified that they need to complete the Re-Review. You may access this case by visiting: ' . l($base_url . "/model/" . $modelnid . "/review/status", "model/" . $modelnid . "/review/status");
-
-  $query = 'SELECT u.uid, u.mail FROM {users} u LEFT JOIN {users_roles} ur ON u.uid = ur.uid '
-         . 'LEFT JOIN {role_permission} rp ON ur.rid = rp.rid '
-         . 'WHERE rp.permission = :perm';
-  $result = db_query($query, array(':perm' => 'manage review'));
-
-  foreach ($result as $index => $record) 
-    if (variable_get('modelreview_emails_enabled', 0) == 1) {
-      modelreview_send_mail($record->mail, $subject, $body);
-    }
+  if (variable_get('modelreview_emails_enabled', 0) == 1)
+    modelreview_notifications($modelnid, 'editor_rereview');
 
   // transfer user to Review form
   drupal_goto('model/' . $modelnid . '/review/status');

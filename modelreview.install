@@ -48,6 +48,20 @@ function modelreview_install() {
     ('ed_rereview', 'comses editor manager', 'role', 'Model Re-Review has been requested', '');";
 
   db_query($sql);
+
+  $sql = "INSERT INTO `modelreview_messages` (`name`, `recipient`, `recipient_type`, `subject`, `body`) VALUES
+  ('cert_accepted', 'author', 'user', 'Model Review has been completed, Certified', 'The model review case for your model, [modelreview:modeltitle], has been completed by a CoMSES Reviewer. After reviewing your case, your model has been determined to meet CoMSES Modeling Best-Practices and is now Certified. You may access this review case by visiting the Model Review Status Page at: [modelreview:statusurl]'),
+  ('cert_denied', 'author', 'user', 'Model Review has been completed, Certification Denied', 'The model review case for your model, [modelreview:modeltitle], has been completed by a CoMSES Reviewer. Unfortunately, After reviewing your case, your model has been determined to meet CoMSES Modeling Best-Practices and your model cannot be certified. For more information on this please visit the Model Review Status Page at: [modelreview:statusurl]'),
+  ('editor_rereview', 'manage review', 'perm', 'Model Re-Review has been requested', 'The author of the model, [modelreview:modeltitle], has completed requested revisions and has requested a Re-Review of their model. The assigned Reviewer has been notified that they need to complete the Re-Review. You may access this case by visiting: [modelreview:statusurl]'),
+  ('invite_reviewer', 'reviewer', 'user', 'OpenABM Model for Review: [modelreview:modeltitle]', '<p>Dear CoMSES Member,</p>\n\n<p>In order to promote best practices and high quality computational models, the CoMSES Net Computational Model Library allows authors of models in the library to request peer-review for Certification.</p>\n\n<p>As a member of CoMSES Net, would you be willing to review the model titled: [modelreview:modeltitle] for Certification in the CoMSES Net Computational Model Library? The review process is not intensive. It involves a review of the programming code and documentation to ensure it meets some basic standards for readability and whether the model runs correctly and does what it is stated to do. More information on the Model Certification standards and review process is available here: [modelreview:reviewinfo].</p>\n\n<p>The model can be viewed at: [modelreview:modelurl].</p>\n\n<p>You can accept or decline this invitation by following this link: [modelreview:statusurl]. If you cannot review the model, when you submit your response on the Review Invitation page, can you also suggest alternative reviewers?</p>\n\n<p>PLEASE CONFIRM THAT YOU ARE OR ARE NOT ABLE TO REVIEW THIS MODEL. THANK YOU!</p>\n\n* * * * * * \n\n<p>A brief description of the model you are asked to review follows:</p>\n\n<h2>[modelreview:modeltitle]:</h2><p>[modelreview:modeldesc]</p>\n \n\n* * * * * * \n\n<p>Sincerely,<br />\nMichael Barton</p>'),
+  ('reviewer_rereview', 'reviewer', 'user', 'Your Model Review Case requires a Re-Review', 'A model you have reviewed, [modelreview:modeltitle], has been revised by the author, and the author has requested a re-review of their case to determine if the model now meets the requirements for certification. You may access this review case by visiting: [modelreview:statusurl]'),
+  ('review_accepted', 'manage review', 'perm', 'Reviewer has accepted Model Review case', 'The reviewer invited to handle the review case for the model, [modelreview:modeltitle], has accepted the review invitation. They should be completing the model review shortly, at which time you will be notified of the new status. To view the model review case: [modelreview:statusurl]'),
+  ('review_completed', 'manage review', 'perm', 'Model Review has been completed', 'The model review case for the model, [modelreview:modeltitle], has been completed by the assigned Reviewer. The reviewer''s notes and recommendation need to be processed by an Editor, and the case processed as needed. You may access this review case by browsing: [modelreview:statusurl]'),
+  ('review_declined', 'manage review', 'perm', 'Reviewer has declined Model Review case', 'The reviewer invited to handle the review case for the model, [modelreview:modeltitle], has declined the review invitation. A new reviewer needs to be selected and assigned to this case. To view the model review case and the declining reviewer''s notes, if any provided, on possible alternate reviewers can be viewed at the following link: [modelreview:statusurl]'),
+  ('review_requested', 'manage review', 'perm', 'Model Review has been requested', 'The author of the model, [modelreview:modeltitle], has requested a Model Review. A Reviewer needs to be assigned to this case, in order for it to proceed. You may access this case by visiting: [modelreview:statusurl]'),
+  ('revision_needed', 'author', 'user', 'Model Review has been completed, Revisions Requested', 'The model review case for your model, [modelreview:modeltitle], has been completed by the assigned Reviewer. Before your model can be certified, the CoMSES Reviewer has requested some revisions be made to your model in order to fully meet Modeling Best Practices. To review the notes and recommendation for your case, please visit the Model Review Status Page at: [modelreview:statusurl]');";
+
+  db_query($sql);
 }
 
 
@@ -268,6 +282,51 @@ function modelreview_schema() {
     'primary key' => array('id'),
   );
 
+  $schema['modelreview_messages'] = array(
+    'description' => 'Table for storing email templates',
+    'fields' => array(
+      'name' => array(
+        'description' => 'Text description of the recommendation code.',
+        'type' => 'varchar',
+        'length' => 32,
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+      ),
+      'recipient' => array(
+        'description' => 'Text description of the recommendation code.',
+        'type' => 'varchar',
+        'length' => 32,
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+      ),
+      'recipient_type' => array(
+        'description' => 'Text description of the recommendation code.',
+        'type' => 'varchar',
+        'length' => 4,
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+      ),
+      'subject' => array(
+        'description' => 'Text description of the recommendation code.',
+        'type' => 'varchar',
+        'length' => 128,
+        'unsigned' => FALSE,
+        'not null' => FALSE,
+      ),
+      'body' => array(
+        'description' => 'Text description of the recommendation code.',
+        'type' => 'text',
+        'unsigned' => FALSE,
+        'not null' => FALSE,
+      ),
+    ),
+    'indexes' => array(
+      'recipient'  => array('recipient'),
+      'recipient_type'  => array('recipient_type'),
+    ),
+    'primary key'  => array('name'),
+  );
+
   return $schema;
 }
 
@@ -292,3 +351,32 @@ function modelreview_update_7101() {
   $query2 = db_query($sql);
 }
 
+function modelreview_update_7102() {
+  $sql = "CREATE TABLE IF NOT EXISTS `modelreview_messages` (
+    `name` varchar(32) NOT NULL,
+    `recipient` varchar(32) NOT NULL,
+    `recipient_type` varchar(4) NOT NULL,
+    `subject` varchar(128) DEFAULT NULL,
+    `body` text,
+    PRIMARY KEY (`name`),
+    KEY `destination` (`recipient`,`recipient_type`),
+    KEY `name` (`name`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=latin1;";
+
+  db_query($sql);
+
+  $sql = "INSERT INTO `modelreview_messages` (`name`, `recipient`, `recipient_type`, `subject`, `body`) VALUES
+  ('cert_accepted', 'author', 'user', 'Model Review has been completed, Certified', 'The model review case for your model, [modelreview:modeltitle], has been completed by a CoMSES Reviewer. After reviewing your case, your model has been determined to meet CoMSES Modeling Best-Practices and is now Certified. You may access this review case by visiting the Model Review Status Page at: [modelreview:statusurl]'),
+  ('cert_denied', 'author', 'user', 'Model Review has been completed, Certification Denied', 'The model review case for your model, [modelreview:modeltitle], has been completed by a CoMSES Reviewer. Unfortunately, After reviewing your case, your model has been determined to meet CoMSES Modeling Best-Practices and your model cannot be certified. For more information on this please visit the Model Review Status Page at: [modelreview:statusurl]'),
+  ('editor_rereview', 'manage review', 'perm', 'Model Re-Review has been requested', 'The author of the model, [modelreview:modeltitle], has completed requested revisions and has requested a Re-Review of their model. The assigned Reviewer has been notified that they need to complete the Re-Review. You may access this case by visiting: [modelreview:statusurl]'),
+  ('invite_reviewer', 'reviewer', 'user', 'OpenABM Model for Review: [modelreview:modeltitle]', '<p>Dear CoMSES Member,</p>\n\n<p>In order to promote best practices and high quality computational models, the CoMSES Net Computational Model Library allows authors of models in the library to request peer-review for Certification.</p>\n\n<p>As a member of CoMSES Net, would you be willing to review the model titled: [modelreview:modeltitle] for Certification in the CoMSES Net Computational Model Library? The review process is not intensive. It involves a review of the programming code and documentation to ensure it meets some basic standards for readability and whether the model runs correctly and does what it is stated to do. More information on the Model Certification standards and review process is available here: [modelreview:reviewinfo].</p>\n\n<p>The model can be viewed at: [modelreview:modelurl].</p>\n\n<p>You can accept or decline this invitation by following this link: [modelreview:statusurl]. If you cannot review the model, when you submit your response on the Review Invitation page, can you also suggest alternative reviewers?</p>\n\n<p>PLEASE CONFIRM THAT YOU ARE OR ARE NOT ABLE TO REVIEW THIS MODEL. THANK YOU!</p>\n\n* * * * * * \n\n<p>A brief description of the model you are asked to review follows:</p>\n\n<h2>[modelreview:modeltitle]:</h2><p>[modelreview:modeldesc]</p>\n \n\n* * * * * * \n\n<p>Sincerely,<br />\nMichael Barton</p>'),
+  ('reviewer_rereview', 'reviewer', 'user', 'Your Model Review Case requires a Re-Review', 'A model you have reviewed, [modelreview:modeltitle], has been revised by the author, and the author has requested a re-review of their case to determine if the model now meets the requirements for certification. You may access this review case by visiting: [modelreview:statusurl]'),
+  ('review_accepted', 'manage review', 'perm', 'Reviewer has accepted Model Review case', 'The reviewer invited to handle the review case for the model, [modelreview:modeltitle], has accepted the review invitation. They should be completing the model review shortly, at which time you will be notified of the new status. To view the model review case: [modelreview:statusurl]'),
+  ('review_completed', 'manage review', 'perm', 'Model Review has been completed', 'The model review case for the model, [modelreview:modeltitle], has been completed by the assigned Reviewer. The reviewer''s notes and recommendation need to be processed by an Editor, and the case processed as needed. You may access this review case by browsing: [modelreview:statusurl]'),
+  ('review_declined', 'manage review', 'perm', 'Reviewer has declined Model Review case', 'The reviewer invited to handle the review case for the model, [modelreview:modeltitle], has declined the review invitation. A new reviewer needs to be selected and assigned to this case. To view the model review case and the declining reviewer''s notes, if any provided, on possible alternate reviewers can be viewed at the following link: [modelreview:statusurl]'),
+  ('review_requested', 'manage review', 'perm', 'Model Review has been requested', 'The author of the model, [modelreview:modeltitle], has requested a Model Review. A Reviewer needs to be assigned to this case, in order for it to proceed. You may access this case by visiting: [modelreview:statusurl]'),
+  ('revision_needed', 'author', 'user', 'Model Review has been completed, Revisions Requested', 'The model review case for your model, [modelreview:modeltitle], has been completed by the assigned Reviewer. Before your model can be certified, the CoMSES Reviewer has requested some revisions be made to your model in order to fully meet Modeling Best Practices. To review the notes and recommendation for your case, please visit the Model Review Status Page at: [modelreview:statusurl]');";
+
+  db_query($sql);
+
+}

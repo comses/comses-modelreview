@@ -143,7 +143,6 @@ function modelreview_theme() {
  * Implementation of hook_menu()
  */
 function modelreview_menu() {
-
   $items['admin/config/comses_settings'] = array(
     'title' => 'CoMSES Modules Settings',
     'description' => "Configuration settings for CoMSES Model Library features",
@@ -158,8 +157,26 @@ function modelreview_menu() {
     'title' => 'Model Reviews',
     'description' => "Configuration settings for Model Reviews",
     'page callback' => 'modelreview_admin',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('modelreview_admin_settings'),
     'access arguments' => array('administer model reviews'),
-    'type' => MENU_NORMAL_ITEM,
+    'file' => 'modelreview.admin.inc',
+    'file path' => drupal_get_path('module','modelreview') . '/includes',
+  );
+  $items['admin/config/comses_settings/modelreviews/settings'] = array(
+    'title' => 'Settings',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => '-2'
+  );
+  $items['admin/config/comses_settings/modelreviews/templates'] = array(
+    'title' => 'Notification Templates',
+    'description' => "Notification templates for Model Reviews",
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('modelreview_admin_templates'),
+    'access arguments' => array('administer model reviews'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'modelreview.admin.inc',
+    'file path' => drupal_get_path('module','modelreview') . '/includes',
   );
 
   // Autocomplete function for selecting reviewers from the CoMSES Member pool
@@ -359,186 +376,65 @@ function modelreview_reviewer_autocomplete($string) {
   drupal_json_output($matches);
 }
 
-function modelreview_admin() {
-  $build = array();
-  
-  $build['content'] = array(
-    'section1' => drupal_get_form('modelreview_admin_message_settings_form'),
-  );
-  
-  $build['pager'] = array(
-    '#theme' => 'pager',
-    '#weight' => 5,
-  );
+/**
+ * Implements hook_token_info().
+ */
+function modelreview_token_info() {
+  $info = array();
 
-  return $build;
+  // Add any new tokens.
+  $info['tokens']['modelreview']['modeldesc'] = t('Model description.');
+  $info['tokens']['modelreview']['modeltitle'] = t('Model title.');
+  $info['tokens']['modelreview']['modelurl'] = t('Model url.');
+  $info['tokens']['modelreview']['reviewinfo'] = t('Model Review Info url.');
+  $info['tokens']['modelreview']['statusurl'] = t('Model review status url.');
+
+  // Return them.
+  return $info;
 }
 
 /**
- * Admin settings page
+ * Implements hook_tokens().
  */
-function modelreview_admin_message_settings_form() {
-  $form = array();
+function modelreview_tokens($type, $tokens, array $data = array(), array $options = array()) {
+  global $base_url;
+  $modelnid = arg(1);
+  $replacements = array();
 
-  $form['reviews_enabled'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Model Reviews Status'),
-    '#collapsible' => FALSE, 
-    '#collapsed' => FALSE,
-  );
+  // The first thing that we're going to check for is the type of token - node
+  if ($type == 'modelreview') {
+    // Loop through each of the available tokens.
+    foreach ($tokens as $name => $original) {
+      // Find the desired token by name
+      switch ($name) {
+        case 'modeldesc':
+          $sql = "SELECT body_value FROM {field_data_body} WHERE entity_type = 'node' AND bundle = 'model' AND entity_id = :nid";
+          $replacements[$original] = substr(check_plain(db_query($sql, array(':nid' => $modelnid))->fetchField()), 0, 600);
+          break;
 
-  $form['reviews_enabled']['modelreview_system_enabled'] = array(
-    '#type' => 'radios', 
-    '#title' => t('Enable/Disable Model Reviews'), 
-    '#default_value' => variable_get('modelreview_system_enabled', 0), 
-    '#options' => array(t('Disabled'), t('Enabled')),
-  );
+        case 'modeltitle':
+          $sql = "SELECT title, uid FROM {node} WHERE nid = :nid";
+          $model = db_query($sql, array(':nid' => $modelnid))->fetchObject();
+          $replacements[$original] = check_plain($model->title);
+          break;
 
-  $form['notifications'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Email Notifications'),
-    '#collapsible' => FALSE, 
-    '#collapsed' => FALSE,
-  );
+        case 'modelurl':
+          $replacements[$original] = '/model/' . $modelurl;
+          break;
 
-  $form['notifications']['modelreview_emails_enabled'] = array(
-    '#type' => 'radios', 
-    '#title' => t('Enable/Disable Notifications'), 
-    '#default_value' => variable_get('modelreview_emails_enabled', 0), 
-    '#options' => array(t('Disabled'), t('Enabled')),
-  );
+        case 'reviewinfo':
+          $replacements[$original] = l($base_url . '/page/model-review-overview', $base_url . '/page/model-review-overview');
+          break;
 
+        case 'statusurl':
+          $replacements[$original] = l($base_url . '/model/' . $modelnid . '/review/status', $base_url . 'model/' . $modelnid . '/review/status');
+          break;
+      }
+    }
+  }
 
-  $form['notification_templates'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Notification Templates'),
-    '#collapsible' => TRUE, 
-    '#collapsed' => TRUE,
-  );
-
-  $form['notification_templates']['review_requested'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Review Requested'),
-    '#collapsible' => TRUE, 
-    '#collapsed' => TRUE,
-  );
-
-  $form['notification_templates']['review_requested']['destination'] = array(
-    '#type' => 'textfield', 
-    '#title' => t('Destination'), 
-    '#default_value' => '', 
-    '#size' => 32,
-    '#maxlength' => 32,
-    '#required' => TRUE,
-  );
-
-  $form['notification_templates']['review_requested']['destination_type'] = array(
-    '#type' => 'radios', 
-    '#title' => t('Destination Type'), 
-    '#default_value' => 0, 
-    '#options' => array(t('Role'), t('User')),
-    '#required' => TRUE,
-  );
-
-  $form['notification_templates']['review_requested']['subject'] = array(
-    '#type' => 'textfield', 
-    '#title' => t('Subject'), 
-    '#default_value' => '', 
-    '#size' => 128,
-    '#maxlength' => 128,
-    '#required' => TRUE,
-  );
-
-  $form['notification_templates']['review_requested']['body'] = array(
-    '#type' => 'textarea', 
-    '#title' => t('Message Body'), 
-    '#default_value' => '', 
-    '#required' => TRUE,
-  );
-
-
-  $form['notification_templates']['invite_reviewer'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Invite Reviewer'),
-    '#collapsible' => TRUE, 
-    '#collapsed' => TRUE,
-  );
-
-  $form['notification_templates']['invite_reviewer']['destination'] = array(
-    '#type' => 'textfield', 
-    '#title' => t('Destination'), 
-    '#default_value' => '', 
-    '#size' => 32,
-    '#maxlength' => 32,
-    '#required' => TRUE,
-  );
-
-  $form['notification_templates']['invite_reviewer']['destination_type'] = array(
-    '#type' => 'radios', 
-    '#title' => t('Destination Type'), 
-    '#default_value' => 0, 
-    '#options' => array(t('Role'), t('User')),
-    '#required' => TRUE,
-  );
-
-  $form['notification_templates']['invite_reviewer']['subject'] = array(
-    '#type' => 'textfield', 
-    '#title' => t('Subject'), 
-    '#default_value' => '', 
-    '#size' => 128,
-    '#maxlength' => 128,
-    '#required' => TRUE,
-  );
-
-  $form['notification_templates']['invite_reviewer']['body'] = array(
-    '#type' => 'textarea', 
-    '#title' => t('Message Body'), 
-    '#default_value' => '', 
-    '#required' => TRUE,
-  );
-
-
-  $form['notification_templates']['review_declined'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Review Declined'),
-    '#collapsible' => TRUE, 
-    '#collapsed' => TRUE,
-  );
-
-  $form['notification_templates']['review_declined']['destination'] = array(
-    '#type' => 'textfield', 
-    '#title' => t('Destination'), 
-    '#default_value' => '', 
-    '#size' => 32,
-    '#maxlength' => 32,
-    '#required' => TRUE,
-  );
-
-  $form['notification_templates']['review_declined']['destination_type'] = array(
-    '#type' => 'radios', 
-    '#title' => t('Destination Type'), 
-    '#default_value' => 0, 
-    '#options' => array(t('Role'), t('User')),
-    '#required' => TRUE,
-  );
-
-  $form['notification_templates']['review_declined']['subject'] = array(
-    '#type' => 'textfield', 
-    '#title' => t('Subject'), 
-    '#default_value' => '', 
-    '#size' => 128,
-    '#maxlength' => 128,
-    '#required' => TRUE,
-  );
-
-  $form['notification_templates']['review_declined']['body'] = array(
-    '#type' => 'textarea', 
-    '#title' => t('Message Body'), 
-    '#default_value' => '', 
-    '#required' => TRUE,
-  );
-
-  return system_settings_form($form);
+  // Return the replacements.
+  return $replacements;
 }
 
 /**
@@ -719,6 +615,43 @@ function modelreview_queues_page() {
   return $content;
 }
 
+function modelreview_notifications($modelnid, $template) {
+
+  // retrieve email template
+  $message = db_select('modelreview_messages', 'm')
+            ->fields('m', array('recipient', 'recipient_type', 'subject', 'body'))
+            ->condition('name', $template)
+            ->execute()->fetchObject();
+
+  $recipient = $message->recipient;
+  $recipient_type = $message->recipient_type;
+  $subject = token_replace($message->subject);
+  $body = token_replace($message->body);
+
+  $field = ($recipient_type == 'perm' ? 'rp.permission' : 'u.uid');
+
+  if ($recipient_type == 'user') {
+    if ($recipient == 'author') {
+      $recipient = $author;
+    }
+    elseif ($recipient == 'reviewer') {
+      // lookup reviewer uid
+      $sql = "SELECT mr.rid, mr.sid, reviewer FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid WHERE mr.model_nid = :nid";
+      $result = db_query($sql, array(':nid' => $modelnid));
+      $row = $result->fetchObject();
+      $recipient = $row->reviewer;
+    }
+  }
+
+  $query = 'SELECT DISTINCT u.uid, u.mail FROM {users} u LEFT JOIN {users_roles} ur ON u.uid = ur.uid '
+          . 'LEFT JOIN {role_permission} rp ON ur.rid = rp.rid '
+          . 'WHERE ' . $field . '= :condition';
+  $result = db_query($query, array(':condition' => $recipient));
+
+  foreach ($result as $index => $record) {
+    modelreview_send_mail($record->mail, $subject, $body);
+  }
+}
 
 /**
  * Send a simple email to specified recipient.
