@@ -88,7 +88,7 @@ function modelreview_requestreview_form_submit($form, &$form_state) {
 
     // notify all Editors
     if (variable_get('modelreview_emails_enabled', 0) == 1)
-      modelreview_notify('review_requested');
+      modelreview_notifications($modelnid, 'review_requested');
 
     drupal_goto('model/' . $modelnid . '/review/status');
   }
@@ -208,7 +208,7 @@ function modelreview_assignreviewer_form_submit($form, &$form_state) {
                ->execute();
 
   // notify the Assigned Reviewer if messaging is enabled
-  #if (variable_get('modelreview_emails_enabled', 0) == 1)
+  if (variable_get('modelreview_emails_enabled', 0) == 1)
     modelreview_notifications($modelnid, 'invite_reviewer');
 
   drupal_goto('model/' . $modelnid . '/review/status'); 

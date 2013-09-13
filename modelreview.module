@@ -414,10 +414,10 @@ function modelreview_tokens($type, $tokens, array $data = array(), array $option
                . "author_lastname.field_profile2_lastname_value as lastname "
                . "FROM {node} n "
                . "LEFT JOIN {profile} p ON n.uid = p.uid AND p.type = 'main' "
-               . "LEFT JOIN field_data_field_profile2_firstname author_firstname ON p.pid = author_firstname.entity_id "
-               . "LEFT JOIN field_data_field_profile2_lastname author_lastname ON p.pid = author_lastname.entity_id "
+               . "LEFT JOIN {field_data_field_profile2_firstname} author_firstname ON p.pid = author_firstname.entity_id "
+               . "LEFT JOIN {field_data_field_profile2_lastname} author_lastname ON p.pid = author_lastname.entity_id "
                . "WHERE n.nid = :nid ";
-          $author = db_query($sql, array(':nid' => $model_nid));
+          $author = db_query($sql, array(':nid' => $modelnid))->fetchObject();
           $replacements[$original] = $author->firstname . ' ' . $author->lastname;
           break;
 
@@ -444,18 +444,17 @@ function modelreview_tokens($type, $tokens, array $data = array(), array $option
           $sql = "SELECT reviewer_firstname.field_profile2_firstname_value as firstname, "
                . "reviewer_lastname.field_profile2_lastname_value as lastname "
                . "FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mr.sid = mra.sid "
-               . "LEFT JOIN {users} reviewer ON mra.reviewer = reviewer.uid "
-               . "LEFT JOIN {profile} p ON reviewer.uid = p.uid AND p.type = 'main' "
-               . "LEFT JOIN field_data_field_profile2_firstname reviewer_firstname ON p.pid = reviewer_firstname.entity_id "
-               . "LEFT JOIN field_data_field_profile2_lastname reviewer_lastname ON p.pid = reviewer_lastname.entity_id "
+               . "LEFT JOIN {profile} p ON mra.uid = p.uid AND p.type = 'main' "
+               . "LEFT JOIN {field_data_field_profile2_firstname} reviewer_firstname ON p.pid = reviewer_firstname.entity_id "
+               . "LEFT JOIN {field_data_field_profile2_lastname} reviewer_lastname ON p.pid = reviewer_lastname.entity_id "
                . "WHERE mr.model_nid = :nid ";
-          $review = db_query($sql, array(':nid' => $model_nid));
+          $review = db_query($sql, array(':nid' => $modelnid));
           $replacements[$original] = $review->firstname . ' ' . $review->lastname;
 
           break;
 
         case 'status_url':
-          $replacements[$original] = l($base_url . '/model/' . $modelnid . '/review/status', $base_url . 'model/' . $modelnid . '/review/status');
+          $replacements[$original] = l($base_url . '/model/' . $modelnid . '/review/status', $base_url . '/model/' . $modelnid . '/review/status');
           break;
       }
     }
@@ -644,7 +643,6 @@ function modelreview_queues_page() {
 }
 
 function modelreview_notifications($modelnid, $template) {
-
   // retrieve email template
   $message = db_select('modelreview_messages', 'm')
             ->fields('m', array('recipient', 'recipient_type', 'subject', 'body'))
@@ -660,7 +658,11 @@ function modelreview_notifications($modelnid, $template) {
 
   if ($recipient_type == 'user') {
     if ($recipient == 'author') {
-      $recipient = $author;
+      $recipient = db_select('node', 'n')
+                 ->fields('n', array('uid'))
+                 ->condition('type', 'model')
+                 ->condition('nid', $modelnid)
+                 ->execute()->fetchField();
     }
     elseif ($recipient == 'reviewer') {
       // lookup reviewer uid
