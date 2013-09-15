@@ -382,14 +382,41 @@ function modelreview_reviewer_autocomplete($string) {
 function modelreview_token_info() {
   $info = array();
 
+  // Add new token type: modelreview
+  $info['types']['modelreview'] = array(
+    'name' => t('Model Review'),
+    'description' => t('Tokens related to the Model Review process.'),
+  );
+
   // Add any new tokens.
-  $info['tokens']['modelreview']['author_name'] = t('Model author\'s name.');
-  $info['tokens']['modelreview']['model_desc'] = t('Model description.');
-  $info['tokens']['modelreview']['model_title'] = t('Model title.');
-  $info['tokens']['modelreview']['model_url'] = t('Model url.');
-  $info['tokens']['modelreview']['review_info'] = t('Model Review Info url.');
-  $info['tokens']['modelreview']['reviewer_name'] = t('Reviewer\'s name.');
-  $info['tokens']['modelreview']['status_url'] = t('Model review status url.');
+  $info['tokens']['modelreview']['author_name'] = array(
+    'name' => t('Model author\'s name.'),
+    'description' => t('The name of the author for the model being reviewed.')
+  );
+  $info['tokens']['modelreview']['model_desc'] = array(
+    'name' => t('Model description.'),
+    'description' => t('Description of the model being reviewed.')
+  );
+  $info['tokens']['modelreview']['model_title'] = array(
+    'name' => t('Model title.'),
+    'description' => t('Name of the model being reviewed.')
+  );
+  $info['tokens']['modelreview']['model_url'] = array(
+    'name' => t('Model url.'),
+    'description' => t('URL for the model being reviewed.')
+  );
+  $info['tokens']['modelreview']['review_info'] = array(
+    'name' => t('Model Review Info url.'),
+    'description' => t('URL for the Model Review information page.')
+  );
+  $info['tokens']['modelreview']['reviewer_name'] = array(
+    'name' => t('Reviewer\'s name.'),
+    'description' => t('The name of the reviewer assigned to review the mdoel.')
+  );
+  $info['tokens']['modelreview']['status_url'] = array(
+    'name' => t('Model review status url.'),
+    'description' => t('URL for the model\'s review status page.')
+  );
 
   // Return them.
   return $info;
