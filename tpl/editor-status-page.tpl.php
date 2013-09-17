@@ -243,17 +243,17 @@
       // plus we need to display the most recent review that is not associate with an editor action (because we haven't done that yet.)
 
       // Lookup new Reviewer Notes (Not related to any editor actions)
-      $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, "
-           . "mc1.compliance AS 'code_clean', mc2.compliance AS 'code_commented', mc3.compliance AS 'model_documented', "
-           . "mc4.compliance AS 'model_runs', code_notes, doc_notes, other_notes, editor_notes, mrec.recommendation "
-           . "FROM modelreview mr INNER JOIN modelreview_action mra ON mr.rid = mra.rid AND mra.statusid = 30 "
-           . "LEFT JOIN modelreview_actiondesc mrad ON mra.statusid = mrad.statusid "
-           . "LEFT JOIN modelreview_compliance mc1 ON mra.code_clean = mc1.cid "
-           . "LEFT JOIN modelreview_compliance mc2 ON mra.code_commented = mc2.cid "
-           . "LEFT JOIN modelreview_compliance mc3 ON mra.model_documented = mc3.cid "
-           . "LEFT JOIN modelreview_compliance mc4 ON mra.model_runs = mc4.cid "
-           . "LEFT JOIN modelreview_recommend mrec ON mra.recommendation = mrec.id "
-           . "WHERE mr.model_nid = :nid AND mra.related IS NULL";
+        $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.related, mra.statusid, mrad.status, statusdate, "
+             . "mc1.compliance AS 'code_clean', mc2.compliance AS 'code_commented', mc3.compliance AS 'model_documented', "
+             . "mc4.compliance AS 'model_runs', code_notes, doc_notes, other_notes, editor_notes, mrec.recommendation "
+             . "FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 30 "
+             . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid "
+             . "INNER JOIN {modelreview_compliance} mc1 ON mra.code_clean = mc1.cid "
+             . "INNER JOIN {modelreview_compliance} mc2 ON mra.code_commented = mc2.cid "
+             . "INNER JOIN {modelreview_compliance} mc3 ON mra.model_documented = mc3.cid "
+             . "INNER JOIN {modelreview_compliance} mc4 ON mra.model_runs = mc4.cid "
+             . "INNER JOIN {modelreview_recommend} mrec ON mra.recommendation = mrec.id "
+             . "WHERE mr.model_nid = :nid AND mra.related = :related";
       $reviews = db_query($sql, array(':nid' => $model_nid));
 
       while ($review_row = $reviews->fetchObject()) {
