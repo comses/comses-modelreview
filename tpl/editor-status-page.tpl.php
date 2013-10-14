@@ -253,8 +253,8 @@
              . "INNER JOIN {modelreview_compliance} mc3 ON mra.model_documented = mc3.cid "
              . "INNER JOIN {modelreview_compliance} mc4 ON mra.model_runs = mc4.cid "
              . "INNER JOIN {modelreview_recommend} mrec ON mra.recommendation = mrec.id "
-             . "WHERE mr.model_nid = :nid AND mra.related = :related";
-        $reviews = db_query($sql, array(':nid' => $model_nid, ':related' => $editor_row->sid));
+             . "WHERE mr.model_nid = :nid AND mra.related IS NULL";
+        $reviews = db_query($sql, array(':nid' => $model_nid));
 
       while ($review_row = $reviews->fetchObject()) {
           print '  <div class="modelreview-reviewinfo modelreview-section">';
