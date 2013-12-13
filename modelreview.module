@@ -509,9 +509,12 @@ function modelreview_goto_status() {
   $author = $row->uid;
 
   // Lookup Review for Assigned Reviewer
-  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mra.statusdate, mra.reviewer "
+  $sql = "SELECT mr.model_nid, mra.rid, mra.sid, mra.statusid, mrad.status, mra.statusdate, mra.reviewer "
        . "FROM {modelreview} mr INNER JOIN {modelreview_action} mra ON mr.rid = mra.rid AND mra.statusid = 20 "
-       . "WHERE mr.model_nid = :nid";
+       . "INNER JOIN {modelreview_actiondesc} mrad ON mra.statusid = mrad.statusid "
+       . "WHERE mr.model_nid = :nid AND mra.reviewer NOT IN "
+       . "(SELECT reviewer FROM modelreview mr2 INNER JOIN modelreview_action mra2 ON mr2.rid = mra2.rid "
+       . "AND mra2.statusid = 23 WHERE mr2.model_nid = :nid) ";
   $result = db_query($sql, array(':nid' => $modelnid));
   $row = $result->fetchObject();
   if (isset($row->reviewer))
@@ -526,7 +529,7 @@ function modelreview_goto_status() {
   if ($user->uid == $author) {
     drupal_goto('model/' . $modelnid . '/review/status/author');
   } 
-  elseif (user_access('review any model') && $user->uid == $reviewer) {
+  elseif (user_access('review any model') || (user_access('review assigned model') && $user->uid == $reviewer)) {
     drupal_goto('model/' . $modelnid . '/review/status/reviewer');
   } 
   elseif (($user->uid == 1) || user_access('edit review')) {
